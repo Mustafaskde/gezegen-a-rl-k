@@ -10,8 +10,8 @@ const head = (id, words, acc, left, top, size = 92, color = "") => `
   <div class="${left === null ? "" : "abs "}head" data-k="${id}" style="${left === null ? "position:relative;display:inline-block" : `left:${left}px;top:${top}px`};font-size:${size}px;${color}">${words
     .map((w, i) => `<span class="t mask"><span class="t${i === acc ? " acc" : ""}">${w}</span></span>`)
     .join('<span class="gap"></span>')}</div>`;
-const up = (el, p) => setT(el, `translateY(${((1 - p) * 175).toFixed(2)}%)`);
-const away = (el, p) => setT(el, `translateY(${(-p * 175).toFixed(2)}%)`);
+const up = (el, p) => { setT(el, `translateY(${((1 - p) * 175).toFixed(2)}%)`); el.style.opacity = clamp(p / 0.35).toFixed(3); };
+const away = (el, p) => { setT(el, `translateY(${(-p * 175).toFixed(2)}%)`); el.style.opacity = (1 - clamp((p - 0.55) / 0.4)).toFixed(3); };
 const words = (id) => [...$[id].querySelectorAll(".mask > .t")];
 
 function wordsInOut(list, t, tin, tout = Infinity, gap = 0.07) {
@@ -116,7 +116,7 @@ function build(stage) {
           <linearGradient id="heatR" x1="0" y1="0" x2="1" y2="0"><stop offset=".36" stop-color="#8E1B0B" stop-opacity="0"/><stop offset=".47" stop-color="#8E1B0B"/></linearGradient>
           <linearGradient id="heatO" x1="0" y1="0" x2="1" y2="0"><stop offset=".40" stop-color="#FF6A1A" stop-opacity="0"/><stop offset=".52" stop-color="#FF6A1A"/></linearGradient>
           <clipPath id="toolArea"><rect x="0" y="236" width="1920" height="844"/></clipPath>
-          <linearGradient id="sheenG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+          <linearGradient id="sheenG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
           <clipPath id="millClip"><rect x="-24" y="-130" width="48" height="130"/></clipPath>
         </defs>
 
@@ -281,7 +281,7 @@ function checkIn(el, elA, t, t0) {
 }
 
 function apply(t) {
-  const push = 0.05 * prog(t, B(1), 5.5, E.smooth) * (1 - prog(t, B(12), 1.0, E.smooth));
+  const push = 0.09 * prog(t, B(1), 5.5, E.smooth) * (1 - prog(t, B(12), 1.0, E.smooth));
   moveCamera($.world, { ...shake(t, B(61), 0.5, 12, 3), s: 1 + push + 0.008 * loop(t, 1) });
 
   // Matkap: gövde, kanallar, uç, ısı
@@ -302,7 +302,7 @@ function apply(t) {
   $.revealRect.setAttribute("width", (700 - reveal).toFixed(2));
   const phase = 120 * span(t, B(14), B(19)) + 220 * span(t, B(37) + 0.2, B(40)) + 700 * span(t, B(45), B(45) + 0.8);
   $.flutes.setAttribute("transform", `translate(${(-(phase % 150)).toFixed(2)},0)`);
-  const sh = t < B(5) ? prog(t, B(1) + 0.05, 1.2, E.inOut) : prog(t, B(8), 1.2, E.inOut);
+  const sh = t < B(5) ? prog(t, B(1) + 0.05, 1.2, E.out) : prog(t, B(8), 1.2, E.inOut);
   $.sheen.setAttribute("x", lerp(-760, 640, sh).toFixed(2));
   show($.sheen, (t > B(1) + 0.05 && t < B(5)) || (t > B(8) && t < B(11)));
   const heat = reset ? 0 : prog(t, B(26), 1.6, E.out) * (1 - prog(t, B(30), 0.6, E.out));
@@ -387,7 +387,7 @@ function apply(t) {
     const tc = B(45 + 3 * i);
     if (bOn) {
       const pin = clamp(spring(t, B(43) + 0.08 * i, 0.55, 0.88), 0, 1.05), pout = prog(t, B(59), 0.5, E.in);
-      const pm = prog(t, B(59), 0.45, E.smooth), sc = Math.max(1 - prog(t, B(59) + 0.1, 0.4, E.in), 0.0001);
+      const pm = prog(t, B(59) + 0.12, 0.38, E.smooth), sc = Math.max(1 - prog(t, B(59) + 0.18, 0.32, E.in), 0.0001);
       const ox = (960 - cx) * pm, oy = (540 - 785) * pm + 300 * (1 - pin);
       $[`block${i}`].setAttribute("transform", `translate(${(cx + ox).toFixed(2)},${(785 + oy).toFixed(2)}) scale(${sc.toFixed(4)}) translate(${-cx},-785)`);
       
@@ -410,8 +410,8 @@ function apply(t) {
     const pin = clamp(spring(t, te, 0.55, 0.82), 0, 1.03);
     if (i === 4) {
       const pc = prog(t, tc, 0.45, E.inOut), pb = prog(t, tc + 0.6, 0.4, E.inOut);
-      const x = cx + lerp(115, 30, pc) + lerp(0, 60, pb) + 900 * (1 - pin) + 900 * prog(t, B(59), 0.5, E.in);
-      const y = BLOCK_TOP + 40 - 70 * pb;
+      const x = cx + lerp(115, 30, pc) + lerp(0, 60, pb) + 900 * (1 - pin);
+      const y = BLOCK_TOP + 40 - 70 * pb - 1100 * prog(t, B(59), 0.5, E.in);
       tool.setAttribute("transform", `translate(${x.toFixed(2)},${y.toFixed(2)})`);
     } else {
       const cut = i === 3 ? cutDy(t, tc + 0.05, DEPTH[i], 0.3, 0.22) : cutDy(t, tc, DEPTH[i], i === 2 ? 0.7 : 0.65);
@@ -433,7 +433,7 @@ function apply(t) {
   show($.flange, flOn);
   if (flOn) {
     const s = 1.25 - 0.25 * prog(t, B(61), 1.0, E.smooth);
-    const fx = lerp(960, 600, prog(t, B(63) - 0.2, 0.8, E.smooth));
+    const fx = lerp(960, 600, prog(t, B(62), 0.7, E.smooth));
     $.flange.setAttribute("transform", `translate(${fx.toFixed(2)},540) scale(${s.toFixed(4)})`);
     drawPath($.flangeLine, prog(t, B(59) + 0.3, 0.7, E.out));
     $.flangeFill.setAttribute("opacity", prog(t, B(61), 0.25, E.out).toFixed(3));
@@ -444,7 +444,7 @@ function apply(t) {
     }
     pop($.turned, t, B(62)); pop($.pcd, t, B(62) + 0.15); pop($.cross, t, B(62) + 0.3);
   }
-  wordsInOut($.h6W, t, B(63), B(69) - 0.2);
+  wordsInOut($.h6W, t, B(63) + 0.2, B(69) - 0.2);
   maskIn($.area, t, B(64), B(69) - 0.2);
   $.area.textContent = `${countUp(t, B(64), 1.0, 0, 98000, (v) => Math.round(v).toLocaleString("tr-TR"))} m²`;
   maskIn($.areaCap, t, B(64) + 0.3, B(69) - 0.2);
