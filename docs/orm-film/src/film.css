@@ -1,0 +1,65 @@
+:root {
+  /* Çelik: antrasit zemin, ısıl işlem turuncusu */
+  --bg: #0E1014;
+  --bg2: #171A20;
+  --ink: #EEF0F3;
+  --ink2: #A3A9B3;
+  --ink3: #6B717B;
+  --line: rgba(238, 240, 243, 0.07);
+  --hair: rgba(238, 240, 243, 0.22);
+  --accent: #FF6A1A;
+  --m0: #3A3F47; --m1: #D9DDE3; --m2: #8D939C; --m3: #2A2E34;
+  --fl: rgba(10, 12, 16, 0.55);
+  --sans: "Inter Display", system-ui, sans-serif;
+  --mono: "Mono", ui-monospace, monospace;
+}
+:root[data-style="blueprint"] {
+  --bg: #0C2A4E; --bg2: #0F3462;
+  --ink: #F2F6FA; --ink2: #A9C1DB; --ink3: #7393B6;
+  --line: rgba(242, 246, 250, 0.08); --hair: rgba(242, 246, 250, 0.3);
+  --accent: #FFC531;
+  --m0: #4E6A8C; --m1: #E4EDF7; --m2: #9DB4CE; --m3: #2E4767;
+  --fl: rgba(8, 28, 54, 0.55);
+}
+:root[data-style="paper"] {
+  --bg: #F1EFEA; --bg2: #E6E3DC;
+  --ink: #121316; --ink2: #555960; --ink3: #8D9097;
+  --line: rgba(18, 19, 22, 0.06); --hair: rgba(18, 19, 22, 0.25);
+  --accent: #E2231A;
+  --m0: #6F757E; --m1: #F4F6F8; --m2: #A9AFB8; --m3: #4A4F57;
+  --fl: rgba(30, 33, 38, 0.45);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+}
+
+#stage { position: relative; overflow: hidden; background: var(--bg); contain: strict; }
+
+.full { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.abs { position: absolute; }
+.mask { overflow: hidden; }
+.t { display: inline-block; white-space: nowrap; line-height: 1.2; vertical-align: top; }
+.grid {
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 60px 60px;
+  background-position: 0 0;
+}
+.head { font-size: 92px; font-weight: 900; letter-spacing: -0.035em; }
+.head .mask { padding: 0.12em 0.02em 0.08em; margin: -0.12em -0.02em -0.08em; line-height: 1.15; }
+.head .gap { display: inline-block; width: 0.26em; }
+.acc { color: var(--accent); }
+.mono { font-family: var(--mono); letter-spacing: 0.08em; }
+.lab { font-family: var(--mono); font-size: 30px; font-weight: 700; color: var(--ink); letter-spacing: 0.04em; }
+.small { font-family: var(--mono); font-size: 24px; font-weight: 400; color: var(--ink2); letter-spacing: 0.14em; }
+.name { font-size: 40px; font-weight: 700; letter-spacing: -0.01em; }
+svg { overflow: visible; }
