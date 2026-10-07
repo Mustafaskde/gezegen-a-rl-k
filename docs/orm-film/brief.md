@@ -54,8 +54,7 @@ Onaylarsan önce telifsiz müziği bulurum. Sonra **2–3 stil seçeneği ve 4 t
 
 ## Status
 
-- Adım: 2 (konsept). Brief onaylandı; tüm sahneler kodda (`src/scenes.js`), `check.mjs` temiz (deterministik, döngü kapanıyor).
-- Taslak kareler: `out/concept/{steel,blueprint,paper}-sheet.png` (3,6 / 8,0 / 28,7 / 33,5 / 38,0 sn).
-- Sırada: kullanıcının stil seçimi ve müzik kararı → 3. adım (cila), 4. adım (ses).
-- Açık: ORM logosu/renkleri, slogan, 1974 teyidi. Müzik siteleri bu ortamdan engelli (yalnızca GitHub açık).
-- Not: Chromium için `--no-sandbox` sarmalayıcısı gerekiyor (scratchpad/chrome, CHROME= ile).
+- Adım: 9 (rapor). Film bitti: stil Çelik, özgün müzik + efekt sesleri; 3 tur görsel inceleme, check.mjs ve verify temiz.
+- Çıktılar: out/orm.mp4 (1920×1080, 60 fps, 42 sn), out/orm-loop.mp4, out/orm-poster.png, out/orm-thumbnail.png, dist/orm.html, out/orm-post.txt.
+- Açık: gerçek ORM logosu (site bu ortamdan engelli); 1974 / Mermerler Grubu teyidi (filmde kullanılmadı).
+- Not: Chromium sarmalayıcısı --no-sandbox ve --window-size=3840,2400 ile (1440 px pencerede büyütülmüş katmanlar bozuluyor).
