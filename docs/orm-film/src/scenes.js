@@ -10,8 +10,8 @@ const head = (id, words, acc, left, top, size = 92, color = "") => `
   <div class="${left === null ? "" : "abs "}head" data-k="${id}" style="${left === null ? "position:relative;display:inline-block" : `left:${left}px;top:${top}px`};font-size:${size}px;${color}">${words
     .map((w, i) => `<span class="t mask"><span class="t${i === acc ? " acc" : ""}">${w}</span></span>`)
     .join('<span class="gap"></span>')}</div>`;
-const up = (el, p) => setT(el, `translateY(${((1 - p) * 140).toFixed(2)}%)`);
-const away = (el, p) => setT(el, `translateY(${(-p * 140).toFixed(2)}%)`);
+const up = (el, p) => setT(el, `translateY(${((1 - p) * 175).toFixed(2)}%)`);
+const away = (el, p) => setT(el, `translateY(${(-p * 175).toFixed(2)}%)`);
 const words = (id) => [...$[id].querySelectorAll(".mask > .t")];
 
 function wordsInOut(list, t, tin, tout = Infinity, gap = 0.07) {
@@ -69,6 +69,7 @@ const RESULT = [
 
 const SHAPE = { bodyD: "" };
 const GRIND = cubicBezier(0.3, 0, 0.6, 1);
+const IRIS = cubicBezier(0.25, 0.35, 0.45, 1);
 const bodyD = (tipP) => {
   const xe = lerp(550, 523, tipP);
   return `M-550,-45 L${xe.toFixed(2)},-45 L550,0 L${xe.toFixed(2)},45 L-550,45 Z`;
@@ -213,7 +214,7 @@ function build(stage) {
       ${TOOLS.map((n, i) => label(`name${i}`, n, COLS[i] - 150, 878, "name", "width:300px;text-align:center")).join("")}
       ${head("h6", ["Kırşehir'de", "üretilir."], 1, 1000, 300, 80)}
       <div class="abs mask" style="left:1000px;top:420px"><div class="t" data-k="area" style="font-size:120px;font-weight:900;letter-spacing:-0.04em;font-variant-numeric:tabular-nums">98.000 m²</div></div>
-      ${label("areaCap", "FABRİKA ALANI", 1006, 570, "small", "color:var(--ink)")}
+      ${label("areaCap", "FABRİKA ALANI", 1006, 566, "small", "color:var(--ink);font-size:36px")}
       ${label("row1", "KALİTE LABORATUVARI", 1006, 640, "lab")}
       ${label("row2", "ROBOTLU ISIL İŞLEM", 1006, 704, "lab")}
       ${label("row3", "HSS &amp; KARBÜR", 1006, 768, "lab")}
@@ -386,7 +387,8 @@ function apply(t) {
     const tc = B(45 + 3 * i);
     if (bOn) {
       const pin = clamp(spring(t, B(43) + 0.08 * i, 0.55, 0.88), 0, 1.05), pout = prog(t, B(59), 0.5, E.in);
-      const sc = Math.max(1 - pout, 0.0001), ox = (600 - cx) * pout, oy = (540 - 785) * pout + 300 * (1 - pin);
+      const pm = prog(t, B(59), 0.45, E.smooth), sc = Math.max(1 - prog(t, B(59) + 0.1, 0.4, E.in), 0.0001);
+      const ox = (960 - cx) * pm, oy = (540 - 785) * pm + 300 * (1 - pin);
       $[`block${i}`].setAttribute("transform", `translate(${(cx + ox).toFixed(2)},${(785 + oy).toFixed(2)}) scale(${sc.toFixed(4)}) translate(${-cx},-785)`);
       
       const pr = i === 4 ? prog(t, tc, 0.45, E.inOut) : prog(t, tc, i === 3 ? 0.12 : 0.2, E.out);
@@ -397,7 +399,7 @@ function apply(t) {
           ? `translate(${cx - 40},${BLOCK_TOP}) scale(${sx.toFixed(4)},${Math.max(pr, 0.0001).toFixed(4)}) translate(40,0)`
           : `translate(${cx},${BLOCK_TOP}) scale(1,${Math.max(pr, 0.0001).toFixed(4)})`;
       for (const el of [$[`res${i}`], $[`resA${i}`]]) { el.setAttribute("transform", tr); show(el, pr > 0); }
-      $[`resA${i}`].setAttribute("opacity", (1 - prog(t, tc + 0.7, 0.6, E.inOut)).toFixed(3));
+      $[`resA${i}`].setAttribute("opacity", (1 - prog(t, tc + (i === 4 ? 0.45 : 0.7), i === 4 ? 0.4 : 0.6, E.inOut)).toFixed(3));
     }
     maskIn($[`name${i}`], t, tc + 0.15, B(59));
     if (i === 0) return;
@@ -408,7 +410,7 @@ function apply(t) {
     const pin = clamp(spring(t, te, 0.55, 0.82), 0, 1.03);
     if (i === 4) {
       const pc = prog(t, tc, 0.45, E.inOut), pb = prog(t, tc + 0.6, 0.4, E.inOut);
-      const x = cx + lerp(115, 30, pc) + lerp(0, 170, pb) + 900 * (1 - pin) + 900 * prog(t, B(59), 0.5, E.in);
+      const x = cx + lerp(115, 30, pc) + lerp(0, 60, pb) + 900 * (1 - pin) + 900 * prog(t, B(59), 0.5, E.in);
       const y = BLOCK_TOP + 40 - 70 * pb;
       tool.setAttribute("transform", `translate(${x.toFixed(2)},${y.toFixed(2)})`);
     } else {
@@ -427,12 +429,13 @@ function apply(t) {
   }
 
   // Doruk: parça birleşir
-  const flOn = t >= B(59) + 0.4 && t < B(70) + 0.4;
+  const flOn = t >= B(59) + 0.3 && t < B(70) + 0.4;
   show($.flange, flOn);
   if (flOn) {
     const s = 1.25 - 0.25 * prog(t, B(61), 1.0, E.smooth);
-    $.flange.setAttribute("transform", `translate(600,540) scale(${s.toFixed(4)})`);
-    drawPath($.flangeLine, prog(t, B(59) + 0.4, 0.6, E.inOut));
+    const fx = lerp(960, 600, prog(t, B(63) - 0.2, 0.8, E.smooth));
+    $.flange.setAttribute("transform", `translate(${fx.toFixed(2)},540) scale(${s.toFixed(4)})`);
+    drawPath($.flangeLine, prog(t, B(59) + 0.3, 0.7, E.out));
     $.flangeFill.setAttribute("opacity", prog(t, B(61), 0.25, E.out).toFixed(3));
     pop($.bore, t, B(61));
     for (let k = 0; k < 6; k++) {
@@ -441,22 +444,22 @@ function apply(t) {
     }
     pop($.turned, t, B(62)); pop($.pcd, t, B(62) + 0.15); pop($.cross, t, B(62) + 0.3);
   }
-  wordsInOut($.h6W, t, B(63), B(71));
-  maskIn($.area, t, B(64), B(71));
+  wordsInOut($.h6W, t, B(63), B(69) - 0.2);
+  maskIn($.area, t, B(64), B(69) - 0.2);
   $.area.textContent = `${countUp(t, B(64), 1.0, 0, 98000, (v) => Math.round(v).toLocaleString("tr-TR"))} m²`;
-  maskIn($.areaCap, t, B(64) + 0.3, B(71));
-  maskIn($.row1, t, B(64) + 0.6, B(71));
-  maskIn($.row2, t, B(64) + 0.85, B(71));
-  maskIn($.row3, t, B(64) + 1.1, B(71));
+  maskIn($.areaCap, t, B(64) + 0.3, B(69) - 0.2);
+  maskIn($.row1, t, B(64) + 0.6, B(69) - 0.2);
+  maskIn($.row2, t, B(64) + 0.85, B(69) - 0.2);
+  maskIn($.row3, t, B(64) + 1.1, B(69) - 0.2);
 
   // Kapanış
   const eOn = t >= B(69) && t < B(83);
   show($.end, eOn);
   if (eOn) {
     if (t < B(81)) iris($.end, prog(t, B(69), 0.8, E.inOut), "600px", "540px", 1430);
-    else iris($.end, 1 - prog(t, B(81) + 0.4, 0.8, E.inOut), "960px", "540px", 1102);
+    else iris($.end, 1 - prog(t, B(81) + 0.35, 0.8, IRIS), "960px", "540px", 1102);
   }
-  wordsInOut($.ormC, t, B(70), B(81), 0.09);
+  wordsInOut($.ormC, t, B(70), B(81) - 0.1, 0.09);
   setT($.endRule, `scaleX(${(prog(t, B(71), 0.6, E.out) * (1 - prog(t, B(81), 0.3, E.in))).toFixed(4)})`);
   maskIn($.company, t, B(71) + 0.2, B(81));
   wordsInOut($.tagW, t, B(73), B(81));

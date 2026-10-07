@@ -46,7 +46,7 @@ html, body {
 
 .full { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
 .abs { position: absolute; }
-.mask { overflow: hidden; padding-bottom: 0.24em; margin-bottom: -0.24em; }
+.mask { overflow: hidden; padding-bottom: 0.32em; margin-bottom: -0.32em; }
 .t { display: inline-block; white-space: nowrap; line-height: 1.2; vertical-align: top; }
 .grid {
   background-image:
@@ -56,7 +56,7 @@ html, body {
   background-position: 0 0;
 }
 .head { font-size: 92px; font-weight: 900; letter-spacing: -0.035em; }
-.head .mask { padding: 0.14em 0.02em 0.26em; margin: -0.14em -0.02em -0.26em; line-height: 1.15; }
+.head .mask { padding: 0.14em 0.02em 0.34em; margin: -0.14em -0.02em -0.34em; line-height: 1.15; }
 .head .gap { display: inline-block; width: 0.26em; }
 .acc { color: var(--accent); }
 .mono { font-family: var(--mono); letter-spacing: 0.08em; }
