@@ -112,6 +112,8 @@ function build(stage) {
             <path d="M0,0 L12,6 L0,12 Z" style="fill:var(--ink)"/></marker>
           <clipPath id="drillClip"><path data-k="drillClip"/></clipPath>
           <clipPath id="revealClip"><rect data-k="revealRect" x="560" y="-60" width="200" height="120"/></clipPath>
+          <linearGradient id="heatR" x1="0" y1="0" x2="1" y2="0"><stop offset=".36" stop-color="#8E1B0B" stop-opacity="0"/><stop offset=".47" stop-color="#8E1B0B"/></linearGradient>
+          <linearGradient id="heatO" x1="0" y1="0" x2="1" y2="0"><stop offset=".40" stop-color="#FF6A1A" stop-opacity="0"/><stop offset=".52" stop-color="#FF6A1A"/></linearGradient>
           <clipPath id="toolArea"><rect x="0" y="236" width="1920" height="844"/></clipPath>
           <linearGradient id="sheenG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
           <clipPath id="millClip"><rect x="-24" y="-130" width="48" height="130"/></clipPath>
@@ -147,8 +149,10 @@ function build(stage) {
         </g>
 
         <g data-k="arm">
-          <line data-k="arm1" stroke="var(--ink3)" stroke-width="24" stroke-linecap="round"/>
-          <line data-k="arm2" stroke="var(--ink3)" stroke-width="20" stroke-linecap="round"/>
+          <line data-k="arm1" stroke="var(--m0)" stroke-width="30" stroke-linecap="round"/>
+          <line data-k="arm2" stroke="var(--m0)" stroke-width="24" stroke-linecap="round"/>
+          <line data-k="arm1h" stroke="var(--m2)" stroke-width="8" stroke-linecap="round"/>
+          <line data-k="arm2h" stroke="var(--m2)" stroke-width="6" stroke-linecap="round"/>
           <circle data-k="armBase" r="36" fill="var(--bg2)" stroke="var(--ink2)" stroke-width="3"/>
           <circle data-k="armElbow" r="20" fill="var(--bg2)" stroke="var(--ink2)" stroke-width="3"/>
           <rect data-k="grip" width="22" height="130" rx="6" fill="var(--ink2)"/>
@@ -158,8 +162,8 @@ function build(stage) {
 
         <g data-k="drillWrap"><g data-k="drill">
           <path data-k="drillBody" fill="url(#metal)"/>
-          <path data-k="heatRed" fill="#8E1B0B" opacity="0"/>
-          <path data-k="heatOr" fill="#FF6A1A" opacity="0"/>
+          <path data-k="heatRed" fill="url(#heatR)" opacity="0"/>
+          <path data-k="heatOr" fill="url(#heatO)" opacity="0"/>
           <g clip-path="url(#drillClip)">
             <g clip-path="url(#revealClip)"><g data-k="flutes">${flutes}</g>
               <line x1="-110" y1="-45" x2="-110" y2="45" stroke="var(--fl)" stroke-width="4"/></g>
@@ -175,6 +179,8 @@ function build(stage) {
           <circle r="44" fill="var(--bg)" stroke="var(--ink2)" stroke-width="3"/>
         </g>
 
+        <g data-k="flare"><circle r="9" fill="#FFB27A"/><circle r="20" fill="#FF6A1A" opacity=".35"/>
+          ${[0, 1, 2, 3, 4].map((k) => `<line data-k="spark${k}" x1="0" y1="0" x2="0" y2="0" stroke="#FFB27A" stroke-width="3" stroke-linecap="round"/>`).join("")}</g>
         <g data-k="angle">
           <path data-k="angL" d="M1510,540 L1436,417" fill="none" stroke="var(--accent)" stroke-width="3"/>
           <path data-k="angR" d="M1510,540 L1436,663" fill="none" stroke="var(--accent)" stroke-width="3"/>
@@ -258,6 +264,8 @@ function arm(t) {
   const set = (el, o) => Object.entries(o).forEach(([k, v]) => el.setAttribute(k, v.toFixed(2)));
   set($.arm1, { x1: bx, y1: by, x2: ex, y2: ey });
   set($.arm2, { x1: ex, y1: ey, x2: tx, y2: ty });
+  set($.arm1h, { x1: bx, y1: by - 6, x2: ex, y2: ey - 6 });
+  set($.arm2h, { x1: ex, y1: ey - 5, x2: tx, y2: ty - 5 });
   set($.armBase, { cx: bx, cy: by });
   set($.armElbow, { cx: ex, cy: ey });
   set($.grip, { x: tx - 11, y: ty - 65 });
@@ -272,7 +280,8 @@ function checkIn(el, elA, t, t0) {
 }
 
 function apply(t) {
-  moveCamera($.world, { ...shake(t, B(61), 0.5, 12, 3), s: 1 + 0.008 * loop(t, 1) });
+  const push = 0.05 * prog(t, B(1), 5.5, E.smooth) * (1 - prog(t, B(12), 1.0, E.smooth));
+  moveCamera($.world, { ...shake(t, B(61), 0.5, 12, 3), s: 1 + push + 0.008 * loop(t, 1) });
 
   // Matkap: gövde, kanallar, uç, ısı
   const pose = drillPose(t);
@@ -295,7 +304,7 @@ function apply(t) {
   const sh = t < B(5) ? prog(t, B(1) + 0.05, 1.2, E.inOut) : prog(t, B(8), 1.2, E.inOut);
   $.sheen.setAttribute("x", lerp(-760, 640, sh).toFixed(2));
   show($.sheen, (t > B(1) + 0.05 && t < B(5)) || (t > B(8) && t < B(11)));
-  const heat = reset ? 0 : prog(t, B(26), 1.6, E.inOut) * (1 - prog(t, B(30), 0.6, E.out));
+  const heat = reset ? 0 : prog(t, B(26), 1.6, E.out) * (1 - prog(t, B(30), 0.6, E.out));
   $.heatRed.setAttribute("opacity", (clamp(heat * 2) * 0.75).toFixed(3));
   $.heatOr.setAttribute("opacity", (clamp(heat * 2 - 1) * 0.8).toFixed(3));
 
@@ -309,9 +318,20 @@ function apply(t) {
   if (wOn) {
     const yoff = -700 * (1 - clamp(spring(t, B(13), 0.5, 0.8))) - 800 * prog(t, B(19) + 0.1, 0.45, E.in);
     $.wheel.setAttribute("transform", `translate(${(960 + reveal).toFixed(2)},${(345 + yoff).toFixed(2)})`);
-    $.wheelSpin.setAttribute("transform", `rotate(${((t * 540) % 360).toFixed(2)})`);
+    $.wheelSpin.setAttribute("transform", `rotate(${((t * 900) % 360).toFixed(2)})`);
   }
-  wordsInOut($.h2W, t, B(15), B(21) + 0.5);
+  const flOn2 = t > B(14) + 0.05 && t < B(19);
+  show($.flare, flOn2);
+  if (flOn2) {
+    const k = stepOf(t, 30), a = 0.7 + 0.3 * hash(k, 4);
+    $.flare.setAttribute("transform", `translate(${(960 + reveal).toFixed(2)},495) scale(${a.toFixed(3)})`);
+    for (let j = 0; j < 5; j++) {
+      const ang = (-150 + 120 * hash(k * 5 + j, 9)) * Math.PI / 180, len = 30 + 60 * hash(k * 5 + j, 11);
+      $[`spark${j}`].setAttribute("x2", (Math.cos(ang) * len).toFixed(1));
+      $[`spark${j}`].setAttribute("y2", (Math.sin(ang) * len).toFixed(1));
+    }
+  }
+  wordsInOut($.h2W, t, B(15), B(21) + 0.3);
   const aOn = t >= B(19) + 0.3 && t < B(23) + 0.3;
   show($.angle, aOn);
   if (aOn) {
@@ -330,8 +350,10 @@ function apply(t) {
     $.glow.setAttribute("opacity", (heat * 0.16).toFixed(3));
     drawPath($.axes, prog(t, B(23) + 0.4, 0.6, E.inOut));
     drawPath($.curve, prog(t, B(26), 2.6, E.linear));
-    const fade = (1 - prog(t, B(31), 0.4, E.in)).toFixed(3);
-    $.furnace.setAttribute("opacity", fade); $.chart.setAttribute("opacity", fade);
+    const out = prog(t, B(31), 0.4, E.in);
+    if (out > 0) drawPath($.furnaceLine, 1 - out);
+    $.chart.setAttribute("opacity", (1 - out).toFixed(3));
+    $.chart.setAttribute("transform", `translate(1180,${(780 + 24 * out).toFixed(2)})`);
   }
   maskIn($.furnaceLab, t, B(23) + 0.3, B(31));
   maskIn($.tempLab, t, B(23) + 0.5, B(31));
