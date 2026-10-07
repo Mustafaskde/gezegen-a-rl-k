@@ -1,0 +1,123 @@
+{
+ "fps": 60,
+ "frames": 2520,
+ "bpm": 120,
+ "cues": [
+  {
+   "sound": "thud",
+   "t": 6.12,
+   "gain": 0.7
+  },
+  {
+   "sound": "swish",
+   "t": 6.5,
+   "gain": 0.8
+  },
+  {
+   "sound": "swish",
+   "t": 8,
+   "gain": 0.6
+  },
+  {
+   "sound": "pop",
+   "t": 9.5,
+   "note": 4
+  },
+  {
+   "sound": "whoosh",
+   "t": 11,
+   "pan": 0.4
+  },
+  {
+   "sound": "blip",
+   "t": 12,
+   "note": 0
+  },
+  {
+   "sound": "blip",
+   "t": 13,
+   "note": 2
+  },
+  {
+   "sound": "whoosh",
+   "t": 15,
+   "pan": -0.4
+  },
+  {
+   "sound": "pop",
+   "t": 17,
+   "note": 0
+  },
+  {
+   "sound": "pop",
+   "t": 18,
+   "note": 2
+  },
+  {
+   "sound": "pop",
+   "t": 19.5,
+   "note": 4
+  },
+  {
+   "sound": "whoosh",
+   "t": 21,
+   "pan": -0.5
+  },
+  {
+   "sound": "thud",
+   "t": 22,
+   "gain": 0.8,
+   "pan": -0.5
+  },
+  {
+   "sound": "thud",
+   "t": 23.5,
+   "gain": 0.8,
+   "pan": -0.25
+  },
+  {
+   "sound": "thud",
+   "t": 25,
+   "gain": 0.8,
+   "pan": 0
+  },
+  {
+   "sound": "thud",
+   "t": 26.5,
+   "gain": 0.8,
+   "pan": 0.25
+  },
+  {
+   "sound": "thud",
+   "t": 28,
+   "gain": 0.8,
+   "pan": 0.5
+  },
+  {
+   "sound": "tick",
+   "t": 31.5
+  },
+  {
+   "sound": "tick",
+   "t": 31.75
+  },
+  {
+   "sound": "tick",
+   "t": 32
+  },
+  {
+   "sound": "pop",
+   "t": 32.5,
+   "note": 4
+  },
+  {
+   "sound": "chime",
+   "t": 34.5
+  },
+  {
+   "sound": "whoosh",
+   "t": 40.4,
+   "gain": 0.6
+  }
+ ]
+}

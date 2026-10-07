@@ -428,3 +428,24 @@ function apply(t) {
   wordsInOut($.tagW, t, B(73), B(81));
   maskIn($.foot, t, B(74) + 0.25, B(81));
 }
+
+function cues() {
+  return [
+    ["thud", B(13) + 0.12, { gain: 0.7 }],
+    ["swish", B(14), { gain: 0.8 }],
+    ["swish", B(17), { gain: 0.6 }],
+    ["pop", B(20), { note: 4 }],
+    ["whoosh", B(23), { pan: 0.4 }],
+    ["blip", B(25), { note: 0 }],
+    ["blip", B(27), { note: 2 }],
+    ["whoosh", B(31), { pan: -0.4 }],
+    ["pop", B(35), { note: 0 }],
+    ["pop", B(37), { note: 2 }],
+    ["pop", B(40), { note: 4 }],
+    ["whoosh", B(43), { pan: -0.5 }],
+    ...[0, 1, 2, 3, 4].map((i) => ["thud", B(45 + 3 * i), { gain: 0.8, pan: (COLS[i] - 960) / 1200 }]),
+    ["tick", B(64), {}], ["tick", B(64) + 0.25, {}], ["tick", B(64) + 0.5, {}], ["pop", B(64) + 1.0, { note: 4 }],
+    ["chime", B(70), {}],
+    ["whoosh", B(81) + 0.4, { gain: 0.6 }],
+  ];
+}
