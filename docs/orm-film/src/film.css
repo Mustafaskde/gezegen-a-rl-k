@@ -2,6 +2,7 @@
   /* Çelik: antrasit zemin, ısıl işlem turuncusu */
   --bg: #0E1014;
   --bg2: #171A20;
+  --bg3: #1F232B;
   --ink: #EEF0F3;
   --ink2: #A3A9B3;
   --ink3: #6B717B;
@@ -14,7 +15,7 @@
   --mono: "Mono", ui-monospace, monospace;
 }
 :root[data-style="blueprint"] {
-  --bg: #0C2A4E; --bg2: #0F3462;
+  --bg: #0C2A4E; --bg2: #0F3462; --bg3: #14407A;
   --ink: #F2F6FA; --ink2: #A9C1DB; --ink3: #7393B6;
   --line: rgba(242, 246, 250, 0.08); --hair: rgba(242, 246, 250, 0.3);
   --accent: #FFC531;
@@ -22,7 +23,7 @@
   --fl: rgba(8, 28, 54, 0.55);
 }
 :root[data-style="paper"] {
-  --bg: #F1EFEA; --bg2: #E6E3DC;
+  --bg: #F1EFEA; --bg2: #E6E3DC; --bg3: #FFFFFF;
   --ink: #121316; --ink2: #555960; --ink3: #8D9097;
   --line: rgba(18, 19, 22, 0.06); --hair: rgba(18, 19, 22, 0.25);
   --accent: #E2231A;
@@ -45,7 +46,7 @@ html, body {
 
 .full { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
 .abs { position: absolute; }
-.mask { overflow: hidden; }
+.mask { overflow: hidden; padding-bottom: 0.24em; margin-bottom: -0.24em; }
 .t { display: inline-block; white-space: nowrap; line-height: 1.2; vertical-align: top; }
 .grid {
   background-image:
@@ -55,11 +56,11 @@ html, body {
   background-position: 0 0;
 }
 .head { font-size: 92px; font-weight: 900; letter-spacing: -0.035em; }
-.head .mask { padding: 0.12em 0.02em 0.08em; margin: -0.12em -0.02em -0.08em; line-height: 1.15; }
+.head .mask { padding: 0.14em 0.02em 0.26em; margin: -0.14em -0.02em -0.26em; line-height: 1.15; }
 .head .gap { display: inline-block; width: 0.26em; }
 .acc { color: var(--accent); }
 .mono { font-family: var(--mono); letter-spacing: 0.08em; }
-.lab { font-family: var(--mono); font-size: 30px; font-weight: 700; color: var(--ink); letter-spacing: 0.04em; }
-.small { font-family: var(--mono); font-size: 24px; font-weight: 400; color: var(--ink2); letter-spacing: 0.14em; }
-.name { font-size: 40px; font-weight: 700; letter-spacing: -0.01em; }
+.lab { font-family: var(--mono); font-size: 40px; font-weight: 700; color: var(--ink); letter-spacing: 0.04em; }
+.small { font-family: var(--mono); font-size: 32px; font-weight: 700; color: #C9CED6; letter-spacing: 0.14em; }
+.name { font-size: 50px; font-weight: 700; letter-spacing: -0.01em; }
 svg { overflow: visible; }
