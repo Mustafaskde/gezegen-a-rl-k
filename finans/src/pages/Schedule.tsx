@@ -134,7 +134,7 @@ export default function Schedule({ query }: { query: URLSearchParams }) {
         subtitle="Vadeli alacaklar, borçlar, çekler ve tekrarlayan ödemeler"
         actions={
           <>
-            <button className="btn" onClick={exportCSV} disabled={!items.length}>
+            <button className="btn export-only" onClick={exportCSV} disabled={!items.length}>
               CSV
             </button>
             <button className="btn" onClick={() => open({ type: 'scheduled', kind: 'odeme' })}>

@@ -1,13 +1,17 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { X, AlertTriangle, CheckCircle2, Clock, CircleDot } from 'lucide-react';
 import type { ScheduledStatus } from '../types';
 
 export function Modal({ title, onClose, children, footer, wide }: { title: string; onClose: () => void; children: ReactNode; footer?: ReactNode; wide?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      // Üst üste açılan pencerelerde yalnızca en üstteki kapanır.
+      const all = document.querySelectorAll('.modal');
+      if (e.key === 'Escape' && all[all.length - 1] === ref.current) onClose();
+    };
     window.addEventListener('keydown', onKey);
-    ref.current?.querySelector<HTMLElement>('input, select, textarea')?.focus();
+    ref.current?.querySelector<HTMLElement>('input, select, textarea, [data-autofocus]')?.focus();
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
   return (
@@ -121,6 +125,54 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   );
 }
 
-export function confirmAction(message: string): boolean {
-  return window.confirm(message);
+interface ConfirmRequest {
+  message: string;
+  confirmLabel: string;
+  danger: boolean;
+  resolve: (ok: boolean) => void;
+}
+
+let showConfirm: ((r: ConfirmRequest) => void) | null = null;
+
+/** Tarayıcının confirm() penceresi yerine uygulama içi onay penceresi. */
+export function askConfirm(message: string, opts: { confirmLabel?: string; danger?: boolean } = {}): Promise<boolean> {
+  return new Promise((resolve) => {
+    const req = { message, confirmLabel: opts.confirmLabel ?? 'Onayla', danger: opts.danger ?? false, resolve };
+    if (showConfirm) showConfirm(req);
+    else resolve(false);
+  });
+}
+
+export function ConfirmHost() {
+  const [req, setReq] = useState<ConfirmRequest | null>(null);
+  useEffect(() => {
+    showConfirm = setReq;
+    return () => {
+      showConfirm = null;
+    };
+  }, []);
+  if (!req) return null;
+  const done = (ok: boolean) => {
+    req.resolve(ok);
+    setReq(null);
+  };
+  return (
+    <Modal
+      title="Onay"
+      onClose={() => done(false)}
+      footer={
+        <>
+          <span className="spacer" />
+          <button type="button" className="btn" onClick={() => done(false)}>
+            Vazgeç
+          </button>
+          <button type="button" className={`btn ${req.danger ? 'btn-danger' : 'btn-primary'}`} onClick={() => done(true)} data-autofocus>
+            {req.confirmLabel}
+          </button>
+        </>
+      }
+    >
+      <p>{req.message}</p>
+    </Modal>
+  );
 }

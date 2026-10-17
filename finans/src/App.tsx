@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeftRight, BarChart3, CalendarClock, LayoutDashboard, Landmark, Menu, Plus, Settings as SettingsIcon, TrendingUp, Users, Wallet, X } from 'lucide-react';
 import { useStore } from './store';
 import { useModal } from './components/modals';
@@ -46,10 +46,17 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
 
+  const themeSet = useRef(false);
   useEffect(() => {
+    // "Sistem" seçiliyken yalnızca kendi koyduğumuz özniteliği kaldır; dışarıdan gelen temaya dokunma.
     const root = document.documentElement;
-    if (data.settings.theme === 'system') root.removeAttribute('data-theme');
-    else root.setAttribute('data-theme', data.settings.theme);
+    if (data.settings.theme !== 'system') {
+      root.setAttribute('data-theme', data.settings.theme);
+      themeSet.current = true;
+    } else if (themeSet.current) {
+      root.removeAttribute('data-theme');
+      themeSet.current = false;
+    }
   }, [data.settings.theme]);
 
   useEffect(() => setMenuOpen(false), [path]);

@@ -2,7 +2,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { Download, Trash2, Upload } from 'lucide-react';
 import type { CategoryKind, Currency } from '../types';
 import { useStore, validateData } from '../store';
-import { Card, Field, PageHeader, Segmented } from '../components/ui';
+import { askConfirm, Card, Field, PageHeader, Segmented } from '../components/ui';
 import { buildDemoData, emptyData } from '../lib/seed';
 import { today } from '../lib/date';
 import { parseAmount, uid } from '../lib/format';
@@ -45,7 +45,7 @@ export default function SettingsPage() {
     setImportError('');
     try {
       const parsed = validateData(JSON.parse(await file.text()));
-      if (window.confirm('Mevcut verilerin yerine yedekteki veriler yüklenecek. Devam edilsin mi?')) {
+      if (await askConfirm('Mevcut verilerin yerine yedekteki veriler yüklenecek. Devam edilsin mi?', { confirmLabel: 'Yükle' })) {
         dispatch({ type: 'data/replace', data: parsed });
         flash('Yedek yüklendi');
       }
@@ -99,7 +99,7 @@ export default function SettingsPage() {
 
         <Card title="Veri yönetimi" subtitle="Veriler yalnızca bu tarayıcıda saklanır. Düzenli yedek almanız önerilir.">
           <div className="stack">
-            <button className="btn" onClick={exportJSON}>
+            <button className="btn export-only" onClick={exportJSON}>
               <Download size={16} /> Yedeği indir (JSON)
             </button>
             <button className="btn" onClick={() => fileRef.current?.click()}>
@@ -120,8 +120,8 @@ export default function SettingsPage() {
             <hr />
             <button
               className="btn"
-              onClick={() => {
-                if (window.confirm('Mevcut verilerin yerine demo veriler yüklenecek. Devam edilsin mi?')) {
+              onClick={async () => {
+                if (await askConfirm('Mevcut verilerin yerine demo veriler yüklenecek. Devam edilsin mi?', { confirmLabel: 'Demo verileri yükle' })) {
                   dispatch({ type: 'data/replace', data: buildDemoData(today()) });
                   flash('Demo veriler yüklendi');
                 }
@@ -131,8 +131,8 @@ export default function SettingsPage() {
             </button>
             <button
               className="btn btn-danger-ghost"
-              onClick={() => {
-                if (window.confirm('Tüm hesaplar, işlemler, cariler ve vadeli kayıtlar silinecek. Bu işlem geri alınamaz. Emin misiniz?')) {
+              onClick={async () => {
+                if (await askConfirm('Tüm hesaplar, işlemler, cariler ve vadeli kayıtlar silinecek. Bu işlem geri alınamaz. Emin misiniz?', { danger: true, confirmLabel: 'Tümünü sil' })) {
                   dispatch({ type: 'data/replace', data: { ...emptyData(), settings: data.settings } });
                   flash('Tüm veriler silindi');
                 }
@@ -178,7 +178,7 @@ export default function SettingsPage() {
                       <button
                         className="icon-btn"
                         aria-label={`${c.name} sil`}
-                        onClick={() => window.confirm(`"${c.name}" silinsin mi? İlişkili kayıtlar kategorisiz kalır.`) && dispatch({ type: 'category/delete', id: c.id })}
+                        onClick={async () => (await askConfirm(`"${c.name}" silinsin mi? İlişkili kayıtlar kategorisiz kalır.`, { danger: true, confirmLabel: 'Sil' })) && dispatch({ type: 'category/delete', id: c.id })}
                       >
                         <Trash2 size={15} />
                       </button>

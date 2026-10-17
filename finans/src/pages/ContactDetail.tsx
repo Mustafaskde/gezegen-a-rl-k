@@ -136,10 +136,10 @@ export default function ContactDetail({ id }: { id: string }) {
         className="printable"
         action={
           <div className="row-gap no-print">
-            <button className="btn btn-sm" onClick={exportStatement} disabled={!statement.length}>
+            <button className="btn btn-sm export-only" onClick={exportStatement} disabled={!statement.length}>
               <Download size={14} /> CSV
             </button>
-            <button className="btn btn-sm" onClick={() => window.print()}>
+            <button className="btn btn-sm export-only" onClick={() => window.print()}>
               <Printer size={14} /> Yazdır
             </button>
           </div>

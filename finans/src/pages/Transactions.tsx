@@ -160,7 +160,7 @@ export default function Transactions({ query }: { query: URLSearchParams }) {
         subtitle="Tüm hesap hareketleri, transferler ve vadeli kayıt ödemeleri"
         actions={
           <>
-            <button className="btn" onClick={exportCSV} disabled={!rows.length}>
+            <button className="btn export-only" onClick={exportCSV} disabled={!rows.length}>
               <Download size={16} /> CSV
             </button>
             <button className="btn" onClick={() => open({ type: 'tx', kind: 'gider' })}>

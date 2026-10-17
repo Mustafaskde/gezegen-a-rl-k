@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import type { Account, AccountType, Contact, ContactType, Currency, Recurrence, Scheduled, ScheduledKind, Transaction, TransactionKind } from '../types';
 import { useStore } from '../store';
-import { Field, Modal, Segmented } from './ui';
+import { askConfirm, Field, Modal, Segmented } from './ui';
 import { money, parseAmount, uid } from '../lib/format';
 import { accountBalances, convert, remaining, round2 } from '../lib/finance';
 import { addDays } from '../lib/date';
@@ -107,8 +107,8 @@ export function TransactionForm({ initial, kind: initialKind = 'gelir', onClose 
   };
 
   const remove = initial
-    ? () => {
-        if (window.confirm(linked ? 'Bu işlem bir vadeli kayda bağlı. Silerseniz kaydın ödenen tutarı geri alınır. Devam edilsin mi?' : 'İşlem silinsin mi?')) {
+    ? async () => {
+        if (await askConfirm(linked ? 'Bu işlem bir vadeli kayda bağlı. Silerseniz kaydın ödenen tutarı geri alınır. Devam edilsin mi?' : 'İşlem silinsin mi?', { danger: true, confirmLabel: 'Sil' })) {
           dispatch({ type: 'tx/delete', id: initial.id });
           onClose();
         }
@@ -229,8 +229,8 @@ export function ScheduledForm({ initial, kind: initialKind = 'tahsilat', contact
   };
 
   const remove = initial
-    ? () => {
-        if (window.confirm('Vadeli kayıt silinsin mi? Bağlı ödeme işlemleri hesaplarda kalır ancak kayıtla ilişkisi kaldırılır.')) {
+    ? async () => {
+        if (await askConfirm('Vadeli kayıt silinsin mi? Bağlı ödeme işlemleri hesaplarda kalır ancak kayıtla ilişkisi kaldırılır.', { danger: true, confirmLabel: 'Sil' })) {
           dispatch({ type: 'scheduled/delete', id: initial.id });
           onClose();
         }
@@ -403,9 +403,9 @@ export function AccountForm({ initial, onClose }: { initial?: Account; onClose: 
   };
 
   const remove = initial
-    ? () => {
+    ? async () => {
         const msg = used ? 'Bu hesabın işlemleri var; silinmek yerine arşivlenecek ve toplamlardan çıkarılacak. Devam edilsin mi?' : 'Hesap silinsin mi?';
-        if (window.confirm(msg)) {
+        if (await askConfirm(msg, { danger: true, confirmLabel: used ? 'Arşivle' : 'Sil' })) {
           dispatch({ type: 'account/delete', id: initial.id });
           onClose();
         }
@@ -486,8 +486,8 @@ export function ContactForm({ initial, onClose }: { initial?: Contact; onClose: 
   };
 
   const remove = initial
-    ? () => {
-        if (window.confirm('Cari silinsin mi? İlişkili işlemler ve vadeli kayıtlar silinmez, yalnızca cari bağlantısı kaldırılır.')) {
+    ? async () => {
+        if (await askConfirm('Cari silinsin mi? İlişkili işlemler ve vadeli kayıtlar silinmez, yalnızca cari bağlantısı kaldırılır.', { danger: true, confirmLabel: 'Sil' })) {
           dispatch({ type: 'contact/delete', id: initial.id });
           onClose();
         }

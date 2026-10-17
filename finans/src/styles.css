@@ -521,6 +521,20 @@ input:disabled {
 .btn-primary:hover {
   background: var(--accent-strong);
 }
+.btn-danger {
+  background: var(--critical);
+  border-color: var(--critical);
+  color: #fff;
+}
+.btn-danger:hover {
+  background: color-mix(in srgb, var(--critical) 85%, black);
+}
+.embedded .export-only {
+  display: none !important;
+}
+.modal-backdrop + .modal-backdrop {
+  z-index: 60;
+}
 .btn-danger-ghost {
   color: var(--neg);
   border-color: color-mix(in srgb, var(--neg) 40%, transparent);

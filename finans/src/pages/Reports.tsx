@@ -67,7 +67,7 @@ export default function Reports() {
         title="Raporlar"
         subtitle="Gelir tablosu, trendler, cari yaşlandırma ve hesap özetleri"
         actions={
-          <button className="btn no-print" onClick={() => window.print()}>
+          <button className="btn no-print export-only" onClick={() => window.print()}>
             <Printer size={16} /> Yazdır / PDF
           </button>
         }
@@ -143,7 +143,7 @@ export default function Reports() {
           <Card
             title="Aylık tablo"
             action={
-              <button className="btn btn-sm no-print" onClick={() => downloadCSV(`aylik_trend_${from}_${to}.csv`, ['Ay', 'Gelir', 'Gider', 'Net', 'Kümülatif net'], months.reduce<{ rows: (string | number)[][]; c: number }>((acc, m) => ((acc.c += m.net), acc.rows.push([m.month, m.gelir, m.gider, m.net, acc.c]), acc), { rows: [], c: 0 }).rows)}>
+              <button className="btn btn-sm no-print export-only" onClick={() => downloadCSV(`aylik_trend_${from}_${to}.csv`, ['Ay', 'Gelir', 'Gider', 'Net', 'Kümülatif net'], months.reduce<{ rows: (string | number)[][]; c: number }>((acc, m) => ((acc.c += m.net), acc.rows.push([m.month, m.gelir, m.gider, m.net, acc.c]), acc), { rows: [], c: 0 }).rows)}>
                 <Download size={14} /> CSV
               </button>
             }
@@ -228,7 +228,7 @@ function IncomeStatement({ income, expense, prevIncome, prevExpense, from, to, c
       title="Gelir tablosu"
       subtitle={`Karşılaştırma dönemi: ${compareLabel}`}
       action={
-        <button className="btn btn-sm no-print" onClick={exportCSV}>
+        <button className="btn btn-sm no-print export-only" onClick={exportCSV}>
           <Download size={14} /> CSV
         </button>
       }
@@ -290,7 +290,7 @@ function AgingTable({ kind, title }: { kind: 'tahsilat' | 'odeme'; title: string
       title={title}
       subtitle={`Toplam ${money(grand)} · vadesi geçmiş ${money(overdue)} (${grand ? percent(overdue / grand).replace('+', '') : '—'})`}
       action={
-        <button className="btn btn-sm no-print" onClick={() => downloadCSV(`${kind === 'tahsilat' ? 'alacak' : 'borc'}_yaslandirma_${ref}.csv`, ['Cari', ...AGING_BUCKETS, 'Toplam'], rows.map((r) => [r.name, ...r.buckets, r.total]))} disabled={!rows.length}>
+        <button className="btn btn-sm no-print export-only" onClick={() => downloadCSV(`${kind === 'tahsilat' ? 'alacak' : 'borc'}_yaslandirma_${ref}.csv`, ['Cari', ...AGING_BUCKETS, 'Toplam'], rows.map((r) => [r.name, ...r.buckets, r.total]))} disabled={!rows.length}>
           <Download size={14} /> CSV
         </button>
       }
@@ -377,7 +377,7 @@ function AccountSummary() {
       subtitle={`Ay başı (${fmtDate(prevEnd)}) ile bugün karşılaştırması`}
       action={
         <button
-          className="btn btn-sm no-print"
+          className="btn btn-sm no-print export-only"
           onClick={() =>
             downloadCSV(`hesap_ozeti_${ref}.csv`, ['Hesap', 'Tür', 'Para birimi', 'Ay başı', 'Bugün', 'Değişim', 'TL karşılığı'], rows.map((a) => [a.name, ACCOUNT_TYPE_LABEL[a.type], a.currency, then.get(a.id) ?? 0, now.get(a.id) ?? 0, (now.get(a.id) ?? 0) - (then.get(a.id) ?? 0), toTRY(now.get(a.id) ?? 0, a.currency, rates)]))
           }
