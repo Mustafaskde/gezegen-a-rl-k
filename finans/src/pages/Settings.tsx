@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Download, Trash2, Upload } from 'lucide-react';
 import type { CategoryKind, Currency } from '../types';
 import { useStore, validateData } from '../store';
@@ -7,6 +7,7 @@ import { buildDemoData, emptyData } from '../lib/seed';
 import { today } from '../lib/date';
 import { parseAmount, uid } from '../lib/format';
 import { downloadFile } from '../lib/csv';
+import AiSettings from '../components/AiSettings';
 
 export default function SettingsPage() {
   const { data, dispatch } = useStore();
@@ -53,6 +54,12 @@ export default function SettingsPage() {
       setImportError(err instanceof Error ? err.message : 'Dosya okunamadı');
     }
   };
+
+  // #/ayarlar?bolum=ai gibi bağlantılarla ilgili bölüme kaydır
+  useEffect(() => {
+    const section = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('bolum');
+    if (section) document.getElementById(`bolum-${section}`)?.scrollIntoView({ block: 'start' });
+  }, []);
 
   const usage = (id: string) => data.transactions.filter((t) => t.categoryId === id).length + data.scheduled.filter((s) => s.categoryId === id).length;
 
@@ -144,7 +151,10 @@ export default function SettingsPage() {
         </Card>
       </div>
 
-      <Card title="Kategoriler">
+      <AiSettings />
+
+      <Card title="Kategoriler ve bütçeler" subtitle="Zorunlu olmayan giderler asistan tarafından tasarruf fırsatı olarak değerlendirilir." className="anchor">
+        <span id="bolum-kategoriler" className="anchor-target" />
         <form className="filters" onSubmit={addCategory}>
           <input placeholder="Yeni kategori adı" value={catName} onChange={(e) => setCatName(e.target.value)} aria-label="Kategori adı" />
           <Segmented
@@ -160,21 +170,57 @@ export default function SettingsPage() {
             Ekle
           </button>
         </form>
-        <div className="grid-1-1 tight">
-          {(['gelir', 'gider'] as const).map((k) => (
-            <div key={k}>
-              <h4 className="list-title">{k === 'gelir' ? 'Gelir kategorileri' : 'Gider kategorileri'}</h4>
-              <ul className="cat-list">
-                {data.categories
-                  .filter((c) => c.kind === k)
-                  .map((c) => (
-                    <li key={c.id}>
+        <h4 className="list-title">Gider kategorileri</h4>
+        <div className="table-wrap">
+          <table className="table cat-table">
+            <thead>
+              <tr>
+                <th>Kategori</th>
+                <th>Tür</th>
+                <th className="right">Aylık bütçe (TL)</th>
+                <th className="right hide-sm">Kayıt</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {data.categories
+                .filter((c) => c.kind === 'gider')
+                .map((c) => (
+                  <tr key={c.id}>
+                    <td>
                       <input
                         defaultValue={c.name}
                         aria-label="Kategori adı"
                         onBlur={(e) => e.target.value.trim() && e.target.value !== c.name && dispatch({ type: 'category/save', category: { ...c, name: e.target.value.trim() } })}
                       />
-                      <span className="muted small">{usage(c.id)} kayıt</span>
+                    </td>
+                    <td>
+                      <Segmented
+                        label={`${c.name} türü`}
+                        value={c.essential ? 'zorunlu' : 'istege'}
+                        onChange={(v) => dispatch({ type: 'category/save', category: { ...c, essential: v === 'zorunlu' } })}
+                        options={[
+                          { value: 'zorunlu', label: 'Zorunlu' },
+                          { value: 'istege', label: 'İsteğe bağlı' },
+                        ]}
+                      />
+                    </td>
+                    <td className="right">
+                      <input
+                        className="budget-input"
+                        inputMode="decimal"
+                        placeholder="Yok"
+                        defaultValue={c.budget ? String(c.budget) : ''}
+                        aria-label={`${c.name} aylık bütçe`}
+                        onBlur={(e) => {
+                          const v = e.target.value.trim() ? parseAmount(e.target.value) : 0;
+                          if (isNaN(v) || v < 0) return;
+                          if ((c.budget ?? 0) !== v) dispatch({ type: 'category/save', category: { ...c, budget: v || undefined } });
+                        }}
+                      />
+                    </td>
+                    <td className="right muted hide-sm">{usage(c.id)}</td>
+                    <td className="right">
                       <button
                         className="icon-btn"
                         aria-label={`${c.name} sil`}
@@ -182,12 +228,34 @@ export default function SettingsPage() {
                       >
                         <Trash2 size={15} />
                       </button>
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          ))}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
         </div>
+        <h4 className="list-title spaced">Gelir kategorileri</h4>
+        <ul className="cat-list">
+          {data.categories
+            .filter((c) => c.kind === 'gelir')
+            .map((c) => (
+              <li key={c.id}>
+                <input
+                  defaultValue={c.name}
+                  aria-label="Kategori adı"
+                  onBlur={(e) => e.target.value.trim() && e.target.value !== c.name && dispatch({ type: 'category/save', category: { ...c, name: e.target.value.trim() } })}
+                />
+                <span className="muted small">{usage(c.id)} kayıt</span>
+                <button
+                  className="icon-btn"
+                  aria-label={`${c.name} sil`}
+                  onClick={async () => (await askConfirm(`"${c.name}" silinsin mi? İlişkili kayıtlar kategorisiz kalır.`, { danger: true, confirmLabel: 'Sil' })) && dispatch({ type: 'category/delete', id: c.id })}
+                >
+                  <Trash2 size={15} />
+                </button>
+              </li>
+            ))}
+        </ul>
       </Card>
     </>
   );

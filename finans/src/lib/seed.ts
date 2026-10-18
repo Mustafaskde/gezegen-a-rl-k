@@ -8,16 +8,22 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'c-hizmet', name: 'Hizmet Gelirleri', kind: 'gelir' },
   { id: 'c-faiz', name: 'Faiz Gelirleri', kind: 'gelir' },
   { id: 'c-diger-gelir', name: 'Diğer Gelirler', kind: 'gelir' },
-  { id: 'c-kira', name: 'Kira', kind: 'gider' },
-  { id: 'c-maas', name: 'Personel Maaşları', kind: 'gider' },
-  { id: 'c-fatura', name: 'Faturalar (Elektrik, Su, İnternet)', kind: 'gider' },
-  { id: 'c-tedarik', name: 'Tedarik / Hammadde', kind: 'gider' },
-  { id: 'c-vergi', name: 'Vergi ve SGK', kind: 'gider' },
-  { id: 'c-pazarlama', name: 'Pazarlama', kind: 'gider' },
-  { id: 'c-ulasim', name: 'Ulaşım ve Akaryakıt', kind: 'gider' },
-  { id: 'c-ofis', name: 'Ofis Giderleri', kind: 'gider' },
-  { id: 'c-banka', name: 'Banka Masrafları', kind: 'gider' },
+  { id: 'c-kira', name: 'Kira', kind: 'gider', essential: true },
+  { id: 'c-maas', name: 'Personel Maaşları', kind: 'gider', essential: true },
+  { id: 'c-fatura', name: 'Faturalar (Elektrik, Su, İnternet)', kind: 'gider', essential: true, budget: 11000 },
+  { id: 'c-tedarik', name: 'Tedarik / Hammadde', kind: 'gider', essential: true, budget: 60000 },
+  { id: 'c-vergi', name: 'Vergi ve SGK', kind: 'gider', essential: true },
+  { id: 'c-pazarlama', name: 'Pazarlama', kind: 'gider', budget: 12000 },
+  { id: 'c-ulasim', name: 'Ulaşım ve Akaryakıt', kind: 'gider', budget: 8000 },
+  { id: 'c-ofis', name: 'Ofis Giderleri', kind: 'gider', budget: 9000 },
+  { id: 'c-banka', name: 'Banka Masrafları', kind: 'gider', essential: true },
 ];
+
+export const DEFAULT_AI: AppData['settings']['ai'] = {
+  engine: 'ollama',
+  ollamaUrl: 'http://localhost:11434',
+  ollamaModel: 'qwen2.5:14b',
+};
 
 export function emptyData(): AppData {
   return {
@@ -27,7 +33,7 @@ export function emptyData(): AppData {
     categories: DEFAULT_CATEGORIES,
     transactions: [],
     scheduled: [],
-    settings: { companyName: 'Şirketim', rates: { TRY: 1, USD: 41.8, EUR: 48.6 }, theme: 'system' },
+    settings: { companyName: 'Şirketim', rates: { TRY: 1, USD: 41.8, EUR: 48.6 }, theme: 'system', ai: DEFAULT_AI },
     updatedAt: new Date().toISOString(),
   };
 }
@@ -122,6 +128,15 @@ export function buildDemoData(ref: string): AppData {
     fixed(26, { kind: 'gider', amount: between(36000, 42000), accountId: 'a-garanti', categoryId: 'c-vergi', contactId: 'k-vergi', description: 'SGK primleri ve muhtasar' });
     if (fixed(15, { kind: 'gider', amount: 2450, accountId: 'a-kk', categoryId: 'c-fatura', contactId: 'k-tekno', description: 'Fiber internet ve bulut hizmetleri' })) cardSpend += 2450;
     fixed(15, { kind: 'gider', amount: between(6200, 9800), accountId: 'a-garanti', categoryId: 'c-fatura', description: 'Elektrik ve su faturaları' });
+    // Aylık abonelikler (kredi kartından)
+    for (const [day, amount, description] of [
+      [3, 1450, 'Tasarım yazılımı aboneliği'],
+      [20, 690, 'Bulut depolama ek paketi'],
+    ] as const) {
+      if (!past(inMonth(day))) continue;
+      tx({ kind: 'gider', date: inMonth(day), amount, accountId: 'a-kk', categoryId: 'c-ofis', description });
+      cardSpend += amount;
+    }
     // Değişken giderler
     const variable = 3 + Math.floor(rand() * 3);
     for (let i = 0; i < variable; i++) {
@@ -148,6 +163,17 @@ export function buildDemoData(ref: string): AppData {
       cardSpend = 0;
     }
   }
+  // Bu ay: asistanın dikkat çekmesi gereken harcamalar (mükerrer ödeme, olağan dışı tutarlar)
+  const recent = (daysAgo: number) => {
+    const d = addDays(ref, -daysAgo);
+    return d < startOfMonth(ref) ? startOfMonth(ref) : d;
+  };
+  tx({ kind: 'gider', date: recent(7), amount: 8900, accountId: 'a-kk', categoryId: 'c-pazarlama', description: 'Sosyal medya reklamları' });
+  tx({ kind: 'gider', date: recent(6), amount: 8900, accountId: 'a-kk', categoryId: 'c-pazarlama', description: 'Sosyal medya reklamları' });
+  tx({ kind: 'gider', date: recent(4), amount: 12400, accountId: 'a-kk', categoryId: 'c-ofis', description: 'Espresso makinesi' });
+  tx({ kind: 'gider', date: recent(3), amount: 4850, accountId: 'a-kasa', categoryId: 'c-ulasim', description: 'Taksi ve vale ücretleri' });
+  tx({ kind: 'gider', date: recent(1), amount: 3150, accountId: 'a-kk', categoryId: 'c-ofis', description: 'Ekip yemeği' });
+
   // Kasadan bankaya
   tx({ kind: 'transfer', date: addDays(ref, -9), amount: 15000, accountId: 'a-kasa', toAccountId: 'a-garanti', description: 'Kasadan bankaya nakit yatırma' });
 
@@ -203,6 +229,6 @@ export function buildDemoData(ref: string): AppData {
     contacts,
     transactions,
     scheduled,
-    settings: { companyName: 'Gezegen Teknoloji Ltd. Şti.', rates: { TRY: 1, USD: 41.8, EUR: 48.6 }, theme: 'system' },
+    settings: { companyName: 'Gezegen Teknoloji Ltd. Şti.', rates: { TRY: 1, USD: 41.8, EUR: 48.6 }, theme: 'system', ai: DEFAULT_AI },
   };
 }

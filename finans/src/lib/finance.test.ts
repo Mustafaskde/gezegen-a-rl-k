@@ -16,7 +16,7 @@ function base(): AppData {
       { id: 'u', name: 'USD', type: 'banka', currency: 'USD', openingBalance: 100, openingDate: '2026-01-01' },
     ],
     contacts: [{ id: 'k', name: 'Müşteri', type: 'musteri' }],
-    settings: { companyName: 'Test', rates: { TRY: 1, USD: 40, EUR: 45 }, theme: 'system' },
+    settings: { ...emptyData().settings, companyName: 'Test', rates: { TRY: 1, USD: 40, EUR: 45 } },
   };
 }
 

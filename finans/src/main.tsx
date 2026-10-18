@@ -4,6 +4,8 @@ import App from './App';
 import { StoreProvider } from './store';
 import { ModalProvider } from './components/modals';
 import { ConfirmHost } from './components/ui';
+import { AssistantProvider } from './components/Assistant';
+import '@fontsource-variable/plus-jakarta-sans';
 import './styles.css';
 
 // Gömülü önizlemelerde (iframe) dosya indirme ve yazdırma çalışmaz; bu düğmeleri gizle.
@@ -16,9 +18,11 @@ try {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <StoreProvider>
-      <ModalProvider>
-        <App />
-      </ModalProvider>
+      <AssistantProvider>
+        <ModalProvider>
+          <App />
+        </ModalProvider>
+      </AssistantProvider>
       <ConfirmHost />
     </StoreProvider>
   </StrictMode>,

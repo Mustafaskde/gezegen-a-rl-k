@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeftRight, BarChart3, CalendarClock, LayoutDashboard, Landmark, Menu, Plus, Settings as SettingsIcon, TrendingUp, Users, Wallet, X } from 'lucide-react';
+import { ArrowLeftRight, BarChart3, CalendarClock, LayoutDashboard, Landmark, Menu, Plus, Settings as SettingsIcon, Sparkles, TrendingUp, Users, X } from 'lucide-react';
+import { EngineBadge, useAssistant } from './components/Assistant';
 import { useStore } from './store';
 import { useModal } from './components/modals';
 import { scheduledStatus } from './lib/finance';
@@ -13,16 +14,29 @@ import CashFlow from './pages/CashFlow';
 import Reports from './pages/Reports';
 import SettingsPage from './pages/Settings';
 
-const NAV = [
-  { path: '/', label: 'Genel Bakış', icon: LayoutDashboard },
-  { path: '/nakit-akisi', label: 'Nakit Akışı', icon: TrendingUp },
-  { path: '/islemler', label: 'Gelir & Gider', icon: ArrowLeftRight },
-  { path: '/vadeler', label: 'Ödeme & Tahsilat', icon: CalendarClock },
-  { path: '/hesaplar', label: 'Banka & Kasa', icon: Landmark },
-  { path: '/cariler', label: 'Cari Hesaplar', icon: Users },
-  { path: '/raporlar', label: 'Raporlar', icon: BarChart3 },
-  { path: '/ayarlar', label: 'Ayarlar', icon: SettingsIcon },
+const NAV_GROUPS = [
+  {
+    title: 'Genel',
+    items: [
+      { path: '/', label: 'Genel Bakış', icon: LayoutDashboard },
+      { path: '/nakit-akisi', label: 'Nakit Akışı', icon: TrendingUp },
+    ],
+  },
+  {
+    title: 'Kayıtlar',
+    items: [
+      { path: '/islemler', label: 'Gelir & Gider', icon: ArrowLeftRight },
+      { path: '/vadeler', label: 'Ödeme & Tahsilat', icon: CalendarClock },
+      { path: '/hesaplar', label: 'Banka & Kasa', icon: Landmark },
+      { path: '/cariler', label: 'Cari Hesaplar', icon: Users },
+    ],
+  },
+  {
+    title: 'Analiz',
+    items: [{ path: '/raporlar', label: 'Raporlar', icon: BarChart3 }],
+  },
 ];
+const NAV = [...NAV_GROUPS.flatMap((g) => g.items), { path: '/ayarlar', label: 'Ayarlar', icon: SettingsIcon }];
 
 function useHashPath(): [string, URLSearchParams] {
   const read = () => window.location.hash.replace(/^#/, '') || '/';
@@ -45,6 +59,8 @@ export default function App() {
   const [path, query] = useHashPath();
   const [menuOpen, setMenuOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
+  const [question, setQuestion] = useState('');
+  const assistant = useAssistant();
 
   const themeSet = useRef(false);
   useEffect(() => {
@@ -107,33 +123,63 @@ export default function App() {
     <div className="app">
       <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
         <div className="brand">
-          <span className="brand-mark">
-            <Wallet size={18} />
+          <span className="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 17l5-6 4 3 7-8" />
+              <path d="M15 6h5v5" />
+            </svg>
           </span>
           <div>
-            <strong>Finans</strong>
-            <span className="muted small brand-company">{data.settings.companyName}</span>
+            <strong>Finans Merkezi</strong>
+            <span className="brand-company">{data.settings.companyName}</span>
           </div>
           <button className="icon-btn only-mobile" onClick={() => setMenuOpen(false)} aria-label="Menüyü kapat">
             <X size={18} />
           </button>
         </div>
         <nav>
-          {NAV.map((n) => (
-            <a key={n.path} href={`#${n.path}`} className={isActive(n.path) ? 'active' : ''} aria-current={isActive(n.path) ? 'page' : undefined}>
-              <n.icon size={18} />
-              <span>{n.label}</span>
-              {n.path === '/vadeler' && overdue > 0 && (
-                <span className="nav-count" title={`${overdue} gecikmiş kayıt`}>
-                  {overdue}
-                </span>
+          {NAV_GROUPS.map((g) => (
+            <div key={g.title} className="nav-group">
+              <span className="nav-title">{g.title}</span>
+              {g.items.map((n) => (
+                <a key={n.path} href={`#${n.path}`} className={isActive(n.path) ? 'active' : ''} aria-current={isActive(n.path) ? 'page' : undefined}>
+                  <n.icon size={17} />
+                  <span>{n.label}</span>
+                  {n.path === '/vadeler' && overdue > 0 && (
+                    <span className="nav-count" title={`${overdue} gecikmiş kayıt`}>
+                      {overdue}
+                    </span>
+                  )}
+                </a>
+              ))}
+              {g.title === 'Analiz' && (
+                <button
+                  className="nav-assistant"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    assistant.setOpen(true);
+                  }}
+                >
+                  <Sparkles size={17} />
+                  <span>Finans Asistanı</span>
+                  <span className="nav-pill">Yerel AI</span>
+                </button>
               )}
-            </a>
+            </div>
           ))}
         </nav>
-        <div className="sidebar-foot muted small">
-          <span className={`dot ${persistent ? 'dot-ok' : 'dot-warn'}`} />
-          {persistent ? 'Veriler bu cihazda kayıtlı' : 'Tarayıcı depolaması kapalı'}
+        <div className="sidebar-foot">
+          <a href="#/ayarlar" className={isActive('/ayarlar') ? 'active' : ''}>
+            <SettingsIcon size={17} />
+            <span>Ayarlar</span>
+          </a>
+          <div className="sidebar-status">
+            <span>
+              <span className={`dot ${persistent ? 'dot-ok' : 'dot-warn'}`} />
+              {persistent ? 'Veriler bu cihazda' : 'Depolama kapalı'}
+            </span>
+            <EngineBadge engine={assistant.engine} />
+          </div>
         </div>
       </aside>
       {menuOpen && <div className="scrim" onClick={() => setMenuOpen(false)} />}
@@ -144,7 +190,23 @@ export default function App() {
             <Menu size={20} />
           </button>
           <span className="topbar-title only-mobile">{NAV.find((n) => isActive(n.path))?.label ?? 'Finans'}</span>
+          <form
+            className="ask-bar hide-sm"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!question.trim()) return assistant.setOpen(true);
+              assistant.ask(question);
+              setQuestion('');
+            }}
+          >
+            <Sparkles size={16} />
+            <input value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Asistana sorun: bu ay nereye fazla harcadım?" aria-label="Asistana sorun" />
+            <kbd>Enter</kbd>
+          </form>
           <span className="spacer" />
+          <button className="btn btn-ghost-accent" onClick={() => assistant.setOpen(true)} aria-label="Finans asistanını aç">
+            <Sparkles size={16} /> <span className="hide-xs">Asistan</span>
+          </button>
           <div className="quick">
             <button className="btn btn-primary" onClick={() => setQuickOpen((v) => !v)} aria-expanded={quickOpen} aria-haspopup="menu">
               <Plus size={16} /> <span className="hide-xs">Yeni kayıt</span>

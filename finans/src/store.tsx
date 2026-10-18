@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react';
 import type { Account, AppData, Category, Contact, Scheduled, Settings, Transaction } from './types';
-import { buildDemoData, DATA_VERSION, emptyData } from './lib/seed';
+import { buildDemoData, DATA_VERSION, DEFAULT_CATEGORIES, emptyData } from './lib/seed';
 import { nextDueDate, remaining, round2 } from './lib/finance';
 import { addDays, diffDays, today } from './lib/date';
 import { uid } from './lib/format';
@@ -149,12 +149,23 @@ export function validateData(raw: unknown): AppData {
     throw new Error('Geçersiz veri dosyası');
   }
   const base = emptyData();
+  // Eski kayıtlarda bulunmayan zorunlu/bütçe alanlarını varsayılan kategorilerden tamamla.
+  const defaults = new Map(DEFAULT_CATEGORIES.map((c) => [c.id, c]));
+  const categories = (d.categories ?? base.categories).map((c) => {
+    const def = defaults.get(c.id);
+    return def && c.essential === undefined && c.budget === undefined ? { ...c, essential: def.essential, budget: def.budget } : c;
+  });
   return {
     ...base,
     ...d,
     contacts: d.contacts ?? [],
-    categories: d.categories ?? base.categories,
-    settings: { ...base.settings, ...d.settings, rates: { ...base.settings.rates, ...d.settings?.rates } },
+    categories,
+    settings: {
+      ...base.settings,
+      ...d.settings,
+      rates: { ...base.settings.rates, ...d.settings?.rates },
+      ai: { ...base.settings.ai, ...d.settings?.ai },
+    },
     version: DATA_VERSION,
   } as AppData;
 }

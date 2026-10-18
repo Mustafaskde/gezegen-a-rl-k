@@ -32,6 +32,10 @@ export interface Category {
   id: string;
   name: string;
   kind: CategoryKind;
+  /** Gider kategorisi zorunlu (kira, maaş, vergi…) mi; değilse isteğe bağlı sayılır. */
+  essential?: boolean;
+  /** Aylık bütçe limiti (TL). */
+  budget?: number;
 }
 
 export type TransactionKind = 'gelir' | 'gider' | 'transfer';
@@ -78,10 +82,20 @@ export interface Scheduled {
   note?: string;
 }
 
+export type AiEngine = 'ollama' | 'kural';
+
+export interface AiSettings {
+  /** 'ollama': yerel model; 'kural': modelsiz yerleşik analiz. */
+  engine: AiEngine;
+  ollamaUrl: string;
+  ollamaModel: string;
+}
+
 export interface Settings {
   companyName: string;
   rates: Record<Currency, number>;
   theme: 'system' | 'light' | 'dark';
+  ai: AiSettings;
 }
 
 export interface AppData {

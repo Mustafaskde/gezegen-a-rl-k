@@ -1,32 +1,74 @@
-# Finans Yönetimi
+# Finans Merkezi
 
 Gelirleri, giderleri, banka hesaplarını, cari hesapları, yaklaşan ödeme ve tahsilatları tek yerden
-yönetmek; finansal rapor almak ve nakit akışını anlık izlemek için modern bir web uygulaması.
+yönetmek, finansal rapor almak ve nakit akışını anlık izlemek için bir web uygulaması. İçinde
+**bilgisayarınızda çalışan** bir yapay zekâ asistanı vardır; verileriniz dışarı gönderilmez.
+
+## Windows'ta çalıştırma
+
+1. **Node.js** kurun: <https://nodejs.org> → "LTS" sürümü.
+2. **Ollama** kurun (yapay zekâ için): <https://ollama.com/download> → Windows. Kurulumdan sonra
+   arka planda kendiliğinden çalışır.
+3. `finans` klasöründeki **`baslat.bat`** dosyasına çift tıklayın.
+   - İlk açılışta gerekli paketleri kurar.
+   - `qwen2.5:14b` modeli yüklü değilse indirmek isteyip istemediğinizi sorar (~9 GB, bir kez).
+   - Uygulamayı tarayıcıda `http://localhost:5173` adresinde açar.
+
+Modeli elle indirmek isterseniz Komut İstemi'nde:
+
+```
+ollama pull qwen2.5:14b
+```
+
+### Hangi model?
+
+| Model | İndirme | Bellek | Not |
+|---|---|---|---|
+| `qwen2.5:14b` | ~9 GB | ~10–11 GB | Varsayılan. En iyi Türkçe yorum. RTX 5060 (8 GB) + 16 GB RAM'de modelin bir kısmı ekran kartına, kalanı RAM'e yüklenir. |
+| `qwen2.5:7b` | ~4,7 GB | ~5–6 GB | Tamamen ekran kartına sığar, daha hızlı. 14B yavaş gelirse buna geçin. |
+
+Model, **Ayarlar → Yapay zekâ asistanı** bölümünden tek tıkla değiştirilir. Ekran kartının
+kullanılması için güncel NVIDIA sürücüsü ve güncel Ollama sürümü gerekir.
 
 ## Özellikler
 
 | Modül | Neler yapılabilir |
 |---|---|
-| **Genel Bakış** | Toplam nakit, bu ayın gelir/gider/net durumu, açık alacak–borç, 30 gün sonrası tahmini bakiye, gecikme ve nakit açığı uyarıları, son işlemler |
-| **Nakit Akışı** | Son 90 günün gerçekleşen bakiyesi + 30/60/90/180 günlük tahmin, aylık açılış/giriş/çıkış/kapanış tablosu, kümülatif bakiyeli planlı hareketler, eksiye düşme uyarısı |
-| **Gelir & Gider** | Gelir, gider ve hesaplar arası (dövizli dahil) transfer kaydı; tür, tarih, hesap, kategori, cari ve metin filtreleri; CSV dışa aktarım |
-| **Ödeme & Tahsilat** | Vadeli alacak/borç, çek, tekrarlayan (haftalık/aylık/yıllık) ödemeler; gecikmiş / bu hafta / 30 gün gruplaması, takvim görünümü, kısmi ödeme, tek tıkla tahsil et / öde |
-| **Banka & Kasa** | Banka hesabı, nakit kasa, kredi kartı; TRY/USD/EUR, IBAN kopyalama, son 30 gün giriş/çıkış, arşivleme |
-| **Cari Hesaplar** | Müşteri/tedarikçi kartları, açık alacak/borç ve gecikmiş tutarlar, yürüyen bakiyeli cari ekstre (CSV/yazdır), peşin işlemler |
-| **Raporlar** | Önceki dönemle karşılaştırmalı gelir tablosu, kategori dağılımı, aylık trend, alacak/borç yaşlandırma (0–30–60–90+ gün), hesap özeti; CSV ve yazdır/PDF |
-| **Ayarlar** | Şirket adı, döviz kurları, açık/koyu tema, kategori yönetimi, JSON yedek alma/geri yükleme, demo veri |
+| **Genel Bakış** | Nakit, gelir, gider, net sonuç, açık alacak/borç; nakit pozisyonu grafiği; **giderlerin kategorilere yüzde dağılımı** (zorunlu / isteğe bağlı ayrımıyla); asistan bulguları; finansal göstergeler (nakit yeterlilik süresi, ortalama tahsilat süresi, gider/gelir oranı); bütçe takibi |
+| **Finans Asistanı** | "Bu ay gereksiz harcamalarım neler?", "Giderlerim nereye gidiyor?", "30 gün sonra nakit durumum?" gibi sorulara cevap verir. İstenirse **kayıt ekler**: "Akbank vadesiz hesabım var, bakiyesi 85 bin TL, ekle", "Dün 2.400 TL akaryakıt harcadım", "15 Aralık'ta Demir Çelik'e 40 bin TL ödeme planla" |
+| **Nakit Akışı** | Gerçekleşen bakiye + 30/60/90/180 günlük tahmin, aylık açılış/giriş/çıkış/kapanış tablosu, nakit açığı uyarısı |
+| **Gelir & Gider** | Gelir, gider ve (dövizli dahil) transfer kayıtları; filtreler; CSV |
+| **Ödeme & Tahsilat** | Vadeli alacak/borç, çek, tekrarlayan ödemeler; liste ve takvim; kısmi ödeme |
+| **Banka & Kasa** | Banka hesabı, kasa, kredi kartı; TRY/USD/EUR |
+| **Cari Hesaplar** | Müşteri/tedarikçi bakiyeleri, gecikmiş tutarlar, cari ekstre |
+| **Raporlar** | Karşılaştırmalı gelir tablosu, aylık trend, alacak/borç yaşlandırma, hesap özeti |
+| **Ayarlar** | Kategori bütçeleri ve zorunlu/isteğe bağlı işareti, döviz kurları, tema, yapay zekâ ayarları, JSON yedek |
 
-### Nasıl çalışır
+## Asistan nasıl çalışır?
 
-- **Hesap bakiyesi** = açılış bakiyesi + gelirler − giderler ± transferler.
-- **Cari bakiye**, cariye bağlı vadeli kayıtların kalan tutarlarından oluşur. Bir vadeli kayıt
-  "Tahsil et / Öde" ile kapatıldığında seçilen hesaba işlem yazılır ve kaydın ödenen tutarı artar;
-  bu işlem silinirse ödeme geri alınır.
-- **Tekrarlayan kayıtlar** tamamen kapandığında bir sonraki dönem otomatik oluşturulur. Henüz
-  oluşmamış dönemler nakit tahminine ve takvime "öngörülen" olarak yansır.
-- Döviz tutarları raporlarda ve toplamlarda Ayarlar'daki güncel kurla TL'ye çevrilir.
-- Veriler tarayıcının `localStorage` alanında tutulur; birden çok sekmede açıkken değişiklikler
-  anında senkronize olur. Düzenli olarak **Ayarlar → Yedeği indir** ile yedek almanız önerilir.
+1. **Uygulama hesaplar:** kategori payları, geçen aya göre değişim, mükerrer olabilecek ödemeler,
+   kategorinin tipik tutarını aşan harcamalar, abonelik benzeri düzenli ödemeler, bütçe aşımları,
+   nakit tahmini. Kod: `src/lib/insights.ts`.
+2. **Yerel model yorumlar:** Qwen bu hesaplanmış özetleri alır, Türkçe cevap ve öneri yazar. Kendi
+   sayı üretmesi istenmez; küçük modellerin hesap hatası bu sayede cevaplara yansımaz.
+3. **Ollama kapalıysa** asistan aynı bulgularla modelsiz (yerleşik analiz) cevap verir.
+
+**Kayıt ekleme:** Asistan isteğinizden bir kayıt önerisi çıkarır (Ollama varsa model, yoksa kural
+tabanlı ayrıştırıcı) ve bir **onay kartı** gösterir. Kayıt yalnızca **Ekle**'ye bastığınızda
+yazılır; model hiçbir kaydı kendi başına ekleyemez, silemez veya değiştiremez.
+
+**Gizlilik:** Uygulama yalnızca bu bilgisayardaki Ollama adresine (`localhost`) bağlanır; başka bir
+adres girilirse reddeder. Veriler tarayıcının yerel depolamasında tutulur. Düzenli olarak
+**Ayarlar → Yedeği indir** ile yedek alın.
+
+### Sorun giderme
+
+- **"Ollama kapalı" görünüyor:** Başlat menüsünden Ollama'yı açın veya Komut İstemi'nde
+  `ollama serve` çalıştırın, sonra Ayarlar'da "Tekrar dene"ye basın.
+- **"Model yüklü değil":** `ollama pull qwen2.5:14b`
+- **Cevaplar yavaş:** Ayarlar'dan `qwen2.5:7b` seçin (`ollama pull qwen2.5:7b`).
+- **Uygulamayı farklı bir adresten açıyorsanız** ve Ollama bağlantıyı reddediyorsa, Ollama'yı
+  `OLLAMA_ORIGINS` ortam değişkeniyle o adrese izin verecek şekilde başlatın.
 
 ## Geliştirme
 
@@ -34,9 +76,9 @@ yönetmek; finansal rapor almak ve nakit akışını anlık izlemek için modern
 cd finans
 npm install
 npm run dev        # http://localhost:5173
-npm test           # hesaplama ve kayıt mantığı testleri
+npm test           # hesaplama, analiz ve kayıt ayrıştırma testleri
 npm run build      # dist/ altında statik derleme
 ```
 
-Teknolojiler: React 18, TypeScript, Vite, Recharts, lucide-react. Sunucu gerektirmez; `dist/`
-klasörü herhangi bir statik barındırmaya yüklenebilir.
+Teknolojiler: React 18, TypeScript, Vite, Recharts, lucide-react, Plus Jakarta Sans (uygulamaya
+gömülü, internet gerektirmez), yerel model için Ollama.
