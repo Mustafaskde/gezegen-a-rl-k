@@ -82,11 +82,8 @@ export interface Scheduled {
   note?: string;
 }
 
-export type AiEngine = 'ollama' | 'kural';
-
+/** Asistan cevaplarını Ollama'da çalışan yerel model yazar. */
 export interface AiSettings {
-  /** 'ollama': yerel model; 'kural': modelsiz yerleşik analiz. */
-  engine: AiEngine;
   ollamaUrl: string;
   ollamaModel: string;
 }

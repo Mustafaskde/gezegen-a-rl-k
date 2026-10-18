@@ -20,7 +20,6 @@ export const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 export const DEFAULT_AI: AppData['settings']['ai'] = {
-  engine: 'ollama',
   ollamaUrl: 'http://localhost:11434',
   ollamaModel: 'qwen2.5:14b',
 };

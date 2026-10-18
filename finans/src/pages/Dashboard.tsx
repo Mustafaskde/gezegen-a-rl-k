@@ -217,10 +217,10 @@ export default function Dashboard() {
           <Card
             title={
               <span className="title-icon">
-                <Sparkles size={16} /> Asistan bulguları
+                <Sparkles size={16} /> Dikkat gerektirenler
               </span>
             }
-            subtitle="Bu ayın verilerinden otomatik çıkarıldı"
+            subtitle="Bu ayın kayıtlarından hesaplandı; yorum için asistana sorun"
             className="insights-card"
           >
             {issues.length ? (
@@ -242,7 +242,7 @@ export default function Dashboard() {
             )}
             <div className="row-gap insights-actions">
               <button className="btn btn-primary btn-sm" onClick={() => assistant.ask('Bu ay gereksiz harcamalarım neler?')}>
-                Gereksiz harcamaları sor
+                Asistana yorumlat
               </button>
               <button className="btn btn-sm" onClick={() => assistant.setOpen(true)}>
                 Asistanı aç

@@ -1,5 +1,6 @@
-// Asistan: soruyu bir konuya eşler, hesaplanmış bulgulardan cevap üretir ve
-// yerel model için yalnızca bu bulguları içeren bir bağlam hazırlar.
+// Asistan için model bağlamı: soruyu bir konuya eşler ve o konudaki hesaplanmış bulguları
+// metne döker. Kullanıcıya gösterilen cevabı her zaman yerel model yazar; buradaki metinler
+// yalnızca modele verilen veridir.
 import type { Analysis } from './insights';
 import { fmtDate, fmtShortDate, money } from './format';
 
@@ -140,7 +141,7 @@ function summary(a: Analysis): string {
   return lines.join('\n');
 }
 
-export function ruleAnswer(intent: Intent, a: Analysis): string {
+export function findingsFor(intent: Intent, a: Analysis): string {
   switch (intent) {
     case 'tasarruf':
       return savings(a);
@@ -187,12 +188,13 @@ export function buildPrompt(question: string, history: ChatMessage[], a: Analysi
     'Yalnızca aşağıdaki VERİ ve HESAPLANMIŞ BULGULAR bölümlerindeki bilgilere dayan. Bu bölümlerde olmayan hiçbir sayı, kişi veya işlem uydurma; hesap yapman gerekiyorsa verilen hazır sayıları kullan.',
     'Önce doğrudan cevabı ver, sonra en fazla 3 somut ve uygulanabilir öneri yaz. Madde işaretleri için "- " kullan, önemli tutarları **kalın** yaz.',
     'Bilgi yoksa bunu açıkça söyle.',
+    'Kullanıcı bir kayıt (hesap, gelir/gider, planlı ödeme veya cari) eklemek istiyor ama tutar, tarih, hesap ya da ad gibi bilgiler eksikse kaydı ekleyemediğini söyle ve eksik bilgiyi sor. Kayıt eklendiğini asla iddia etme.',
     '',
     'VERİ',
     factSheet(a, company, ref),
     '',
     'HESAPLANMIŞ BULGULAR (soruyla ilgili)',
-    ruleAnswer(intent, a),
+    findingsFor(intent, a),
   ].join('\n');
   return [{ role: 'system' as const, content: system }, ...history.slice(-6), { role: 'user' as const, content: question }];
 }

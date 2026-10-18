@@ -1,21 +1,19 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { ArrowUp, Check, Cpu, Lock, PlusCircle, Sparkles, Square, Trash2, X } from 'lucide-react';
+import { ArrowUp, Check, Cpu, Lock, PlusCircle, RefreshCw, Sparkles, Square, Trash2, X } from 'lucide-react';
 import { useStore } from '../store';
 import { analyze } from '../lib/insights';
-import { buildPrompt, detectIntent, ruleAnswer, SUGGESTED_QUESTIONS, type ChatMessage } from '../lib/assistant';
+import { buildPrompt, SUGGESTED_QUESTIONS, type ChatMessage } from '../lib/assistant';
 import { chatJSON, hasModel, isLocalUrl, ollamaStatus, streamChat } from '../lib/ollama';
 import { fmtDate, money, uid } from '../lib/format';
-import { isActionRequest, modelExtractionPrompt, normalizeModelAction, parseActionRule, type ProposedAction } from '../lib/actions';
+import { isActionRequest, modelExtractionPrompt, normalizeModelAction, type ProposedAction } from '../lib/actions';
 import { ACCOUNT_TYPE_LABEL, CONTACT_TYPE_LABEL, RECURRENCE_LABEL } from './forms';
 import type { AppData } from '../types';
 
-type Source = 'ollama' | 'kural';
-
 interface Message extends ChatMessage {
   id: string;
-  source?: Source;
   streaming?: boolean;
-  note?: string;
+  /** Modelden cevap alınamadıysa hata açıklaması. */
+  error?: string;
   /** Kullanıcı onayı bekleyen kayıt önerisi. */
   action?: ProposedAction;
   actionState?: 'pending' | 'done' | 'cancelled';
@@ -25,8 +23,7 @@ export type EngineState =
   | { kind: 'checking' }
   | { kind: 'ready'; model: string }
   | { kind: 'no-model'; model: string; models: string[] }
-  | { kind: 'offline'; error: string }
-  | { kind: 'rules' };
+  | { kind: 'offline'; error: string };
 
 interface AssistantCtx {
   open: boolean;
@@ -55,7 +52,6 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
   dataRef.current = data;
 
   const refresh = useCallback(async () => {
-    if (ai.engine !== 'ollama') return setEngine({ kind: 'rules' });
     if (document.documentElement.classList.contains('embedded')) {
       return setEngine({ kind: 'offline', error: 'Bu önizleme sayfası güvenlik nedeniyle bilgisayardaki modele bağlanamaz. Uygulamayı kendi bilgisayarınızda baslat.bat ile açtığınızda Qwen devreye girer.' });
     }
@@ -65,7 +61,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
     if (!s.ok) return setEngine({ kind: 'offline', error: s.error ?? 'Ollama’ya ulaşılamadı.' });
     if (!hasModel(s.models, ai.ollamaModel)) return setEngine({ kind: 'no-model', model: ai.ollamaModel, models: s.models });
     setEngine({ kind: 'ready', model: ai.ollamaModel });
-  }, [ai.engine, ai.ollamaUrl, ai.ollamaModel]);
+  }, [ai.ollamaUrl, ai.ollamaModel]);
 
   useEffect(() => {
     refresh();
@@ -81,61 +77,50 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
 
   // Panel açıldığında durumu tazele (Ollama sonradan başlatılmış olabilir).
   useEffect(() => {
-    if (open && engine.kind !== 'ready' && engine.kind !== 'rules') refresh();
+    if (open && engine.kind !== 'ready') refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const patch = (id: string, fn: (m: Message) => Message) => setMessages((ms) => ms.map((m) => (m.id === id ? fn(m) : m)));
 
+  // Bütün cevapları yerel model yazar. Uygulamanın hesapladığı özetler yalnızca modele bağlam
+  // olarak verilir; model bağlı değilse hazır cevap üretilmez, panel kurulum uyarısı gösterir.
   const ask = useCallback(
     async (question: string) => {
       const q = question.trim();
       if (!q) return;
       setOpen(true);
-      const d = dataRef.current;
-      const analysis = analyze(d, ref);
-      const history = messages.filter((m) => !m.streaming && !m.note).map(({ role, content }) => ({ role, content }));
-      const user: Message = { id: uid(), role: 'user', content: q };
-      const replyId = uid();
-      const fallback = ruleAnswer(detectIntent(q), analysis);
-
-      // Kayıt ekleme isteği: önce öneri hazırlanır, kullanıcı onaylamadan hiçbir şey yazılmaz.
-      if (isActionRequest(q)) {
-        setMessages((ms) => [...ms, user, { id: replyId, role: 'assistant', content: '', source: engine.kind === 'ready' ? 'ollama' : 'kural', streaming: true }]);
-        let action: ProposedAction | undefined;
-        if (engine.kind === 'ready') {
-          try {
-            const { system, schema } = modelExtractionPrompt(d, ref);
-            action = normalizeModelAction(await chatJSON(d.settings.ai.ollamaUrl, engine.model, [{ role: 'system', content: system }, { role: 'user', content: q }], schema), d, ref);
-          } catch {
-            /* model anlayamadıysa kural tabanlı ayrıştırıcıya düş */
-          }
-        }
-        const rule = action ? undefined : parseActionRule(q, d, ref);
-        action ??= rule?.action;
-        patch(replyId, (m) =>
-          action
-            ? { ...m, streaming: false, content: 'Şu kaydı eklememi onaylıyor musunuz?', action, actionState: 'pending', source: m.source }
-            : { ...m, streaming: false, content: rule?.missing ?? 'Ne eklemek istediğinizi anlayamadım.', source: 'kural' },
-        );
-        return;
-      }
-
       if (engine.kind !== 'ready') {
-        setMessages((ms) => [...ms, user, { id: replyId, role: 'assistant', content: fallback, source: 'kural' }]);
+        refresh();
         return;
       }
-      setMessages((ms) => [...ms, user, { id: replyId, role: 'assistant', content: '', source: 'ollama', streaming: true }]);
+      const d = dataRef.current;
+      const { ollamaUrl } = d.settings.ai;
+      const history = messages.filter((m) => !m.streaming && !m.error && !m.action && m.content).map(({ role, content }) => ({ role, content }));
+      const replyId = uid();
+      setMessages((ms) => [...ms, { id: uid(), role: 'user', content: q }, { id: replyId, role: 'assistant', content: '', streaming: true }]);
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       try {
-        await streamChat(d.settings.ai.ollamaUrl, engine.model, buildPrompt(q, history, analysis, d.settings.companyName, ref), (t) => patch(replyId, (m) => ({ ...m, content: m.content + t })), ctrl.signal);
+        // Kayıt ekleme isteği: model isteği bir kayda çevirir, kod doğrular, kullanıcı onaylamadan yazılmaz.
+        if (isActionRequest(q)) {
+          const { system, schema } = modelExtractionPrompt(d, ref);
+          const raw = await chatJSON(ollamaUrl, engine.model, [{ role: 'system', content: system }, { role: 'user', content: q }], schema, ctrl.signal);
+          const action = normalizeModelAction(raw, d, ref);
+          if (action) {
+            patch(replyId, (m) => ({ ...m, streaming: false, content: 'Şu kaydı eklememi onaylıyor musunuz?', action, actionState: 'pending' }));
+            return;
+          }
+          // Kayıt çıkarılamadıysa (ör. tutar eksik) model normal sohbette eksik bilgiyi sorar.
+        }
+        const analysis = analyze(d, ref);
+        await streamChat(ollamaUrl, engine.model, buildPrompt(q, history, analysis, d.settings.companyName, ref), (t) => patch(replyId, (m) => ({ ...m, content: m.content + t })), ctrl.signal);
         patch(replyId, (m) => ({ ...m, streaming: false }));
       } catch (err) {
         if (ctrl.signal.aborted) {
           patch(replyId, (m) => ({ ...m, streaming: false, content: m.content || '_Durduruldu._' }));
         } else {
-          patch(replyId, () => ({ id: replyId, role: 'assistant', content: fallback, source: 'kural', note: `Yerel modelden cevap alınamadı (${err instanceof Error ? err.message : 'bilinmeyen hata'}). Yerleşik analizle cevaplandı.` }));
+          patch(replyId, (m) => ({ ...m, streaming: false, error: `Yerel modelden cevap alınamadı: ${err instanceof Error ? err.message : 'bilinmeyen hata'}` }));
           refresh();
         }
       } finally {
@@ -182,8 +167,8 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
             <X size={18} />
           </button>
         </header>
-        <Conversation messages={messages} engine={engine} onAsk={ask} onConfirm={confirmAction} onCancel={cancelAction} />
-        <Composer busy={busy} onSend={ask} onStop={stop} open={open} />
+        <Conversation messages={messages} engine={engine} onAsk={ask} onConfirm={confirmAction} onCancel={cancelAction} onRetry={refresh} />
+        <Composer busy={busy} disabled={engine.kind !== 'ready'} onSend={ask} onStop={stop} open={open} />
         <p className="assistant-privacy">
           <Lock size={12} /> Veriler bu bilgisayardan çıkmaz · Kayıtlar yalnızca onayınızla eklenir.
         </p>
@@ -202,12 +187,10 @@ export function EngineBadge({ engine }: { engine: EngineState }) {
       );
     case 'checking':
       return <span className="engine">Yerel model kontrol ediliyor…</span>;
-    case 'rules':
-      return <span className="engine">Yerleşik analiz (model kapalı)</span>;
     case 'no-model':
-      return <span className="engine engine-warn">{engine.model} yüklü değil · yerleşik analiz</span>;
+      return <span className="engine engine-warn">{engine.model} yüklü değil</span>;
     case 'offline':
-      return <span className="engine engine-warn">Ollama kapalı · yerleşik analiz</span>;
+      return <span className="engine engine-warn">Yerel model bağlı değil</span>;
   }
 }
 
@@ -217,13 +200,16 @@ function Conversation({
   onAsk,
   onConfirm,
   onCancel,
+  onRetry,
 }: {
   messages: Message[];
   engine: EngineState;
   onAsk: (q: string) => void;
   onConfirm: (id: string, a: ProposedAction) => void;
   onCancel: (id: string) => void;
+  onRetry: () => void;
 }) {
+  const ready = engine.kind === 'ready';
   const endRef = useRef<HTMLDivElement>(null);
   const last = messages[messages.length - 1];
   useEffect(() => {
@@ -236,14 +222,19 @@ function Conversation({
         <div className="assistant-notice">
           {engine.kind === 'offline' ? (
             <>
-              <strong>Yerel model bağlı değil.</strong> Sorularınız hesaplanmış verilerle cevaplanır. {engine.error}{' '}
+              <strong>Yerel model bağlı değil.</strong> Asistan cevaplarını Qwen yazar; model çalışmadan soru cevaplanamaz. {engine.error}
             </>
           ) : (
             <>
-              <strong>{engine.model} modeli yüklü değil.</strong> Komut satırında <code>ollama pull {engine.model}</code> çalıştırın.{' '}
+              <strong>{engine.model} modeli yüklü değil.</strong> Komut satırında <code>ollama pull {engine.model}</code> çalıştırın.
             </>
           )}
-          <a href="#/ayarlar?bolum=ai">Kurulum adımları</a>
+          <div className="row-gap notice-actions">
+            <button className="btn btn-sm" onClick={onRetry}>
+              <RefreshCw size={14} /> Tekrar dene
+            </button>
+            <a href="#/ayarlar?bolum=ai">Kurulum adımları</a>
+          </div>
         </div>
       )}
       {messages.length === 0 ? (
@@ -252,7 +243,7 @@ function Conversation({
           <p className="muted">Hesaplar, işlemler, cariler ve vadeli kayıtlarınız analiz edilir. Örneğin:</p>
           <div className="chips">
             {[...SUGGESTED_QUESTIONS, 'Akbank vadesiz hesabım var, bakiyesi 85 bin TL, ekle'].map((q) => (
-              <button key={q} className="chip" onClick={() => onAsk(q)}>
+              <button key={q} className="chip" onClick={() => onAsk(q)} disabled={!ready}>
                 {q}
               </button>
             ))}
@@ -263,10 +254,9 @@ function Conversation({
           <div key={m.id} className={`msg msg-${m.role}`}>
             {m.role === 'assistant' ? (
               <>
-                {m.note && <p className="msg-note">{m.note}</p>}
-                {m.content ? <Markdown text={m.content} /> : <span className="typing" aria-label="Yazıyor">●●●</span>}
+                {m.content ? <Markdown text={m.content} /> : m.streaming ? <span className="typing" aria-label="Yazıyor">●●●</span> : null}
+                {m.error && <p className="msg-note">{m.error}</p>}
                 {m.action && m.actionState === 'pending' && <ActionCard action={m.action} onConfirm={() => onConfirm(m.id, m.action!)} onCancel={() => onCancel(m.id)} />}
-                {!m.streaming && <span className="msg-source">{m.source === 'ollama' ? 'Yerel model' : 'Yerleşik analiz'}</span>}
               </>
             ) : (
               m.content
@@ -274,7 +264,7 @@ function Conversation({
           </div>
         ))
       )}
-      {messages.length > 0 && !last?.streaming && (
+      {ready && messages.length > 0 && !last?.streaming && (
         <div className="chips chips-follow">
           {SUGGESTED_QUESTIONS.filter((q) => !messages.some((m) => m.content === q))
             .slice(0, 3)
@@ -290,7 +280,7 @@ function Conversation({
   );
 }
 
-function Composer({ busy, onSend, onStop, open }: { busy: boolean; onSend: (q: string) => void; onStop: () => void; open: boolean }) {
+function Composer({ busy, disabled, onSend, onStop, open }: { busy: boolean; disabled: boolean; onSend: (q: string) => void; onStop: () => void; open: boolean }) {
   const [text, setText] = useState('');
   const ref = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
@@ -298,7 +288,7 @@ function Composer({ busy, onSend, onStop, open }: { busy: boolean; onSend: (q: s
   }, [open]);
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
-    if (busy || !text.trim()) return;
+    if (busy || disabled || !text.trim()) return;
     onSend(text);
     setText('');
   };
@@ -308,7 +298,8 @@ function Composer({ busy, onSend, onStop, open }: { busy: boolean; onSend: (q: s
         ref={ref}
         rows={1}
         value={text}
-        placeholder="Örn. bu ay hangi harcamaları kısabilirim?"
+        placeholder={disabled ? 'Yerel model bağlanınca soru sorabilirsiniz' : 'Örn. bu ay hangi harcamaları kısabilirim?'}
+        disabled={disabled}
         aria-label="Asistana sorunuz"
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
@@ -323,7 +314,7 @@ function Composer({ busy, onSend, onStop, open }: { busy: boolean; onSend: (q: s
           <Square size={14} />
         </button>
       ) : (
-        <button type="submit" className="send-btn" disabled={!text.trim()} aria-label="Gönder">
+        <button type="submit" className="send-btn" disabled={disabled || !text.trim()} aria-label="Gönder">
           <ArrowUp size={16} />
         </button>
       )}

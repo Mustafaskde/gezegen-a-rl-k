@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Check, Copy, Cpu, Lock, RefreshCw } from 'lucide-react';
-import type { AiEngine } from '../types';
 import { useStore } from '../store';
 import { useAssistant } from './Assistant';
-import { Card, Field, Segmented } from './ui';
+import { Card, Field } from './ui';
 import { isLocalUrl } from '../lib/ollama';
 
 const RECOMMENDED = [
@@ -67,11 +66,9 @@ export default function AiSettings() {
                   ? `Bağlı: ${engine.model}`
                   : engine.kind === 'checking'
                     ? 'Kontrol ediliyor…'
-                    : engine.kind === 'rules'
-                      ? 'Yalnızca yerleşik analiz kullanılıyor'
-                      : engine.kind === 'no-model'
-                        ? `Ollama çalışıyor, ${engine.model} yüklü değil`
-                        : 'Ollama’ya bağlanılamadı'}
+                    : engine.kind === 'no-model'
+                      ? `Ollama çalışıyor, ${engine.model} yüklü değil`
+                      : 'Ollama’ya bağlanılamadı'}
               </strong>
               <span className="muted small">
                 {engine.kind === 'ready'
@@ -80,7 +77,7 @@ export default function AiSettings() {
                     ? engine.error
                     : engine.kind === 'no-model'
                       ? `Yüklü modeller: ${engine.models.join(', ') || 'yok'}`
-                      : 'Asistan hesaplanmış bulgularla cevap verir.'}
+                      : 'Model bağlanana kadar asistan soru cevaplayamaz.'}
               </span>
             </div>
             <button className="btn btn-sm" onClick={refresh}>
@@ -89,24 +86,12 @@ export default function AiSettings() {
           </div>
 
           <div className="form-grid">
-            <div className="field-full">
-              <Segmented<AiEngine>
-                label="Cevap kaynağı"
-                value={ai.engine}
-                onChange={(engine) => save({ engine })}
-                options={[
-                  { value: 'ollama', label: 'Yerel model (Ollama)' },
-                  { value: 'kural', label: 'Yalnızca yerleşik analiz' },
-                ]}
-              />
-            </div>
             <Field label="Model" hint="Ollama’da yüklü model adı">
               <input
                 list="ai-models"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 onBlur={() => model.trim() && model.trim() !== ai.ollamaModel && save({ ollamaModel: model.trim() })}
-                disabled={ai.engine !== 'ollama'}
               />
               <datalist id="ai-models">
                 {[...new Set([...RECOMMENDED.map((r) => r.model), ...installed])].map((m) => (
@@ -115,7 +100,7 @@ export default function AiSettings() {
               </datalist>
             </Field>
             <Field label="Ollama adresi" hint="Varsayılan: http://localhost:11434">
-              <input value={url} onChange={(e) => setUrl(e.target.value)} onBlur={saveUrl} disabled={ai.engine !== 'ollama'} />
+              <input value={url} onChange={(e) => setUrl(e.target.value)} onBlur={saveUrl} />
             </Field>
             {urlError && <p className="form-error field-full">{urlError}</p>}
             <div className="field-full model-options">
@@ -126,7 +111,7 @@ export default function AiSettings() {
                   className={`model-option ${ai.ollamaModel === r.model ? 'active' : ''}`}
                   onClick={() => {
                     setModel(r.model);
-                    save({ ollamaModel: r.model, engine: 'ollama' });
+                    save({ ollamaModel: r.model });
                   }}
                 >
                   <Cpu size={15} />

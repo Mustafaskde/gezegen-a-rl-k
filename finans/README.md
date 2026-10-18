@@ -42,19 +42,22 @@ kullanılması için güncel NVIDIA sürücüsü ve güncel Ollama sürümü ger
 | **Banka & Kasa** | Banka hesabı, kasa, kredi kartı; TRY/USD/EUR |
 | **Cari Hesaplar** | Müşteri/tedarikçi bakiyeleri, gecikmiş tutarlar, cari ekstre |
 | **Raporlar** | Karşılaştırmalı gelir tablosu, aylık trend, alacak/borç yaşlandırma, hesap özeti |
-| **Ayarlar** | Kategori bütçeleri ve zorunlu/isteğe bağlı işareti, döviz kurları, tema, yapay zekâ ayarları, JSON yedek |
+| **Ayarlar** | Kategori bütçeleri ve zorunlu/isteğe bağlı işareti, döviz kurları, tema, yapay zekâ ayarları (model, Ollama adresi, bağlantı durumu), JSON yedek |
 
 ## Asistan nasıl çalışır?
 
 1. **Uygulama hesaplar:** kategori payları, geçen aya göre değişim, mükerrer olabilecek ödemeler,
    kategorinin tipik tutarını aşan harcamalar, abonelik benzeri düzenli ödemeler, bütçe aşımları,
    nakit tahmini. Kod: `src/lib/insights.ts`.
-2. **Yerel model yorumlar:** Qwen bu hesaplanmış özetleri alır, Türkçe cevap ve öneri yazar. Kendi
-   sayı üretmesi istenmez; küçük modellerin hesap hatası bu sayede cevaplara yansımaz.
-3. **Ollama kapalıysa** asistan aynı bulgularla modelsiz (yerleşik analiz) cevap verir.
+2. **Bütün cevapları yerel model yazar:** Qwen bu hesaplanmış özetleri alır, Türkçe cevap ve öneri
+   yazar. Kendi sayı üretmesi istenmez; küçük modellerin hesap hatası bu sayede cevaplara yansımaz.
+   Hazır (otomatik) cevap yoktur.
+3. **Ollama kapalıysa** asistan cevap vermez; panelde kurulum uyarısı ve "Tekrar dene" düğmesi
+   görünür. Genel Bakış'taki "Dikkat gerektirenler" kartı ise modelden bağımsız olarak hesaplanır.
 
-**Kayıt ekleme:** Asistan isteğinizden bir kayıt önerisi çıkarır (Ollama varsa model, yoksa kural
-tabanlı ayrıştırıcı) ve bir **onay kartı** gösterir. Kayıt yalnızca **Ekle**'ye bastığınızda
+**Kayıt ekleme:** Asistan isteğinizi yerel modelle bir kayıt önerisine çevirir; uygulama modelin
+çıktısını doğrular ve bir **onay kartı** gösterir. Tutar veya tarih gibi bir bilgi eksikse model
+bunu sorar. Kayıt yalnızca **Ekle**'ye bastığınızda
 yazılır; model hiçbir kaydı kendi başına ekleyemez, silemez veya değiştiremez.
 
 **Gizlilik:** Uygulama yalnızca bu bilgisayardaki Ollama adresine (`localhost`) bağlanır; başka bir
@@ -76,7 +79,7 @@ adres girilirse reddeder. Veriler tarayıcının yerel depolamasında tutulur. D
 cd finans
 npm install
 npm run dev        # http://localhost:5173
-npm test           # hesaplama, analiz ve kayıt ayrıştırma testleri
+npm test           # hesaplama, analiz ve kayıt doğrulama testleri
 npm run build      # dist/ altında statik derleme
 ```
 

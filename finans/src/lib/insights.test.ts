@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildDemoData } from './seed';
 import { analyze, expenseBreakdown } from './insights';
-import { detectIntent, ruleAnswer, buildPrompt } from './assistant';
+import { detectIntent, findingsFor, buildPrompt } from './assistant';
 
 const REF = '2026-10-18';
 const data = buildDemoData(REF);
@@ -40,8 +40,8 @@ describe('asistan', () => {
     expect(detectIntent('Önümüzdeki 30 günde nakit durumum ne olur?')).toBe('nakit');
     expect(detectIntent('Geciken tahsilatlar kimde?')).toBe('alacak');
   });
-  it('kural tabanlı cevap hesaplanmış bulguları içerir', () => {
-    const text = ruleAnswer('tasarruf', a);
+  it('modele verilen bulgular hesaplanmış tespitleri içerir', () => {
+    const text = findingsFor('tasarruf', a);
     expect(text).toContain('Sosyal medya reklamları');
     expect(text).toContain('Espresso makinesi');
   });

@@ -164,7 +164,7 @@ export function validateData(raw: unknown): AppData {
       ...base.settings,
       ...d.settings,
       rates: { ...base.settings.rates, ...d.settings?.rates },
-      ai: { ...base.settings.ai, ...d.settings?.ai },
+      ai: { ollamaUrl: d.settings?.ai?.ollamaUrl ?? base.settings.ai.ollamaUrl, ollamaModel: d.settings?.ai?.ollamaModel ?? base.settings.ai.ollamaModel },
     },
     version: DATA_VERSION,
   } as AppData;
