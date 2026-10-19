@@ -1,0 +1,675 @@
+<title>Tarih ve Zaman Quiz</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,600;0,800;1,500&family=Pixelify+Sans:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: tek sütun, İznik çinisi şeritli kart; soru → geri bildirim → sonuç sahnesi */
+:root {
+  --bg: #edf1f7;
+  --surface: #ffffff;
+  --ink: #13203a;
+  --muted: #56627c;
+  --line: #d4dbe8;
+  --cobalt: #1f3f99;
+  --turq: #1d8a85;
+  --coral: #c8432f;
+  --gold: #a87a1c;
+  --ok: #1d7f47;
+  --ok-bg: #e4f4ea;
+  --bad: #b8322a;
+  --bad-bg: #fbe7e4;
+  --stage-top: #1b2a52;
+  --stage-bot: #2c3f73;
+  --on-accent: #ffffff;
+  --floor: #5f5446;
+  --floor-top: #857661;
+  --font-display: "Alegreya", "Georgia", "Times New Roman", serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-pixel: "Pixelify Sans", "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1222; --surface: #121c33; --ink: #e6ebf5; --muted: #9ba8c4; --line: #24325a;
+    --cobalt: #8aa4ff; --turq: #4cc3bc; --coral: #ff7f68; --gold: #e2b552;
+    --ok: #55c98a; --ok-bg: #12301f; --bad: #ff7466; --bad-bg: #3a1716;
+    --stage-top: #0f1833; --stage-bot: #1d2b55; --on-accent: #0b1222;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1222; --surface: #121c33; --ink: #e6ebf5; --muted: #9ba8c4; --line: #24325a;
+  --cobalt: #8aa4ff; --turq: #4cc3bc; --coral: #ff7f68; --gold: #e2b552;
+  --ok: #55c98a; --ok-bg: #12301f; --bad: #ff7466; --bad-bg: #3a1716;
+  --stage-top: #0f1833; --stage-bot: #1d2b55; --on-accent: #0b1222;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 20px; }
+
+/* Başlık */
+.masthead { display: grid; gap: 6px; }
+.eyebrow {
+  font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--turq);
+}
+h1 {
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(30px, 6vw, 44px);
+  line-height: 1.08; margin: 0; text-wrap: balance;
+}
+h1 em { font-style: italic; font-weight: 500; color: var(--cobalt); }
+.sub { margin: 0; color: var(--muted); max-width: 60ch; }
+
+/* Kart */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.tiles {
+  height: 14px;
+  background:
+    radial-gradient(circle, var(--coral) 0 2.5px, transparent 3.5px) 0 0 / 28px 14px,
+    radial-gradient(circle, var(--surface) 0 5px, transparent 6px) 14px 7px / 28px 14px,
+    var(--cobalt);
+}
+.panel-body { padding: 24px clamp(18px, 4vw, 32px) 28px; display: grid; gap: 20px; }
+
+/* Başlangıç */
+.intro { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; }
+.intro > div { min-width: 0; display: grid; gap: 14px; }
+.intro h2 { font-family: var(--font-display); font-size: 24px; margin: 0; line-height: 1.2; }
+.topics { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0; list-style: none; }
+.topics li {
+  font-size: 14px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--ink);
+}
+.facts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; color: var(--muted); font-size: 15px; }
+.facts b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.mini-stage {
+  width: 150px; border-radius: 10px; overflow: hidden;
+  background: linear-gradient(var(--stage-top), var(--stage-bot));
+  display: grid; place-items: end center; padding-top: 6px;
+}
+.mini-stage canvas { width: 120px; height: 160px; }
+@media (max-width: 520px) {
+  .intro { grid-template-columns: 1fr; }
+  .mini-stage { justify-self: center; }
+}
+
+canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+
+.btn {
+  font: 700 16px/1 var(--font-body);
+  padding: 14px 22px; border-radius: 10px; border: 0; cursor: pointer;
+  background: var(--cobalt); color: var(--on-accent);
+  justify-self: start;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn:focus-visible, .opt:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.btn.ghost { background: transparent; color: var(--cobalt); border: 1.5px solid var(--cobalt); }
+
+/* Soru ekranı */
+.qhead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.qcount { font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
+.qtopic { font-size: 14px; font-weight: 600; color: var(--turq); }
+.bar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--turq); transition: width .35s ease; }
+.qtext {
+  font-family: var(--font-display); font-weight: 600; font-size: clamp(20px, 3.6vw, 24px);
+  line-height: 1.3; margin: 0; text-wrap: pretty;
+}
+.opts { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.opt {
+  width: 100%; text-align: left; display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: center;
+  font: 500 16px/1.4 var(--font-body); color: var(--ink);
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px;
+  padding: 10px 14px 10px 10px; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.opt:hover:not(:disabled) { border-color: var(--cobalt); }
+.opt .key {
+  width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center;
+  font-weight: 700; font-size: 15px; background: var(--bg); color: var(--muted);
+}
+.opt span:last-child { min-width: 0; }
+.opt:disabled { cursor: default; }
+.opt.correct { border-color: var(--ok); background: var(--ok-bg); }
+.opt.correct .key { background: var(--ok); color: var(--on-accent); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-bg); }
+.opt.wrong .key { background: var(--bad); color: var(--on-accent); }
+.opt.dim { opacity: .55; }
+
+.feedback { border-radius: 10px; padding: 12px 16px; font-size: 15.5px; display: grid; gap: 2px; }
+.feedback strong { font-size: 16px; }
+.feedback.ok { background: var(--ok-bg); color: var(--ink); border-left: 4px solid var(--ok); }
+.feedback.ok strong { color: var(--ok); }
+.feedback.bad { background: var(--bad-bg); color: var(--ink); border-left: 4px solid var(--bad); }
+.feedback.bad strong { color: var(--bad); }
+.qfoot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.hint { font-size: 13px; color: var(--muted); }
+
+/* Sonuç sahnesi */
+.stage {
+  position: relative; overflow: hidden;
+  background: linear-gradient(var(--stage-top), var(--stage-bot));
+  display: grid; place-items: end center;
+  padding-top: 92px; min-height: 420px;
+}
+.stage::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 20px; z-index: 1;
+  background: var(--floor); border-top: 5px solid var(--floor-top);
+}
+.stage canvas { width: 240px; height: 320px; position: relative; z-index: 2; }
+.bubble {
+  position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+  width: min(320px, calc(100% - 32px)); z-index: 3;
+  font: 700 17px/1.35 var(--font-pixel); text-align: center;
+  background: #fffdf6; color: #1a1a1a; padding: 10px 14px; border: 3px solid #1a1a1a;
+  box-shadow: 4px 4px 0 #1a1a1a;
+}
+.bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -12px; margin-left: -6px;
+  border: 6px solid transparent; border-top-color: #1a1a1a;
+}
+.stage.dance { background: radial-gradient(circle at 50% 110%, #3d5fbf 0, transparent 60%), linear-gradient(var(--stage-top), var(--stage-bot)); }
+.stage.angry { background: radial-gradient(circle at 50% 100%, #7a1d1d 0, transparent 65%), linear-gradient(#1c1010, #3a1414); }
+.stage.shake { animation: shake .16s linear; }
+@keyframes shake {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-4px, 2px); }
+  50% { transform: translate(4px, -1px); }
+  75% { transform: translate(-2px, 1px); }
+}
+.fx { position: absolute; z-index: 1; pointer-events: none; font-family: var(--font-pixel); }
+.note { color: #ffd76a; font-size: 26px; animation: float 2.4s linear forwards; }
+.confetti { width: 8px; height: 8px; animation: fall 2.8s linear forwards; }
+@keyframes float { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-260px) translateX(30px); opacity: 0; } }
+@keyframes fall { from { transform: translateY(-20px) rotate(0); } to { transform: translateY(460px) rotate(540deg); } }
+
+.score { display: grid; grid-template-columns: auto 1fr; gap: 6px 20px; align-items: center; }
+.score .big {
+  font-family: var(--font-display); font-weight: 800; font-size: 56px; line-height: 1;
+  font-variant-numeric: tabular-nums; grid-row: span 2;
+}
+.score .big small { font-size: 28px; color: var(--muted); font-weight: 600; }
+.verdict { font-family: var(--font-display); font-size: 22px; font-weight: 600; margin: 0; line-height: 1.25; }
+.verdict.ok { color: var(--ok); }
+.verdict.bad { color: var(--bad); }
+.score p { margin: 0; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .stage.shake, .note, .confetti { animation: none; }
+  .fx { display: none; }
+  .bar span { transition: none; }
+}
+</style>
+
+<main class="wrap">
+  <header class="masthead">
+    <span class="eyebrow">9. Sınıf Tarih · 1. Ünite</span>
+    <h1>Tarih Bilimi <em>ve</em> Zaman</h1>
+    <p class="sub">Tarihin konusu ve yöntemi, kaynaklar, yardımcı bilimler, çağlar ve takvimler üzerine 15 soruluk değerlendirme.</p>
+  </header>
+
+  <!-- Başlangıç -->
+  <section class="panel" id="start">
+    <div class="tiles" aria-hidden="true"></div>
+    <div class="panel-body">
+      <div class="intro">
+        <div>
+          <h2>Sınava hazır mısın?</h2>
+          <ul class="topics">
+            <li>Tarihin konusu</li><li>Kaynaklar</li><li>Yardımcı bilimler</li>
+            <li>Tarih öncesi</li><li>Çağlar</li><li>Takvimler</li>
+          </ul>
+          <p class="facts"><span><b>15</b> soru</span><span><b>4</b> seçenek</span><span>Geçme: <b>%70</b></span></p>
+          <p class="sub">Sonunda Fatih Sultan Mehmet seni bekliyor. İyi yaparsan dans eder, kötü yaparsan yerleri tekmeler.</p>
+          <button class="btn" id="startBtn" type="button">Sınava Başla</button>
+        </div>
+        <div class="mini-stage" aria-hidden="true"><canvas id="miniCanvas" width="48" height="64"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Soru -->
+  <section class="panel" id="quiz" hidden>
+    <div class="tiles" aria-hidden="true"></div>
+    <div class="panel-body">
+      <div class="qhead">
+        <span class="qcount" id="qcount">Soru 1 / 15</span>
+        <span class="qtopic" id="qtopic"></span>
+      </div>
+      <div class="bar" aria-hidden="true"><span id="bar"></span></div>
+      <p class="qtext" id="qtext"></p>
+      <ul class="opts" id="opts"></ul>
+      <div class="feedback" id="feedback" role="status" hidden></div>
+      <div class="qfoot">
+        <span class="hint">Klavye: A–D ile seç, Enter ile geç</span>
+        <button class="btn" id="nextBtn" type="button" hidden>Sonraki Soru</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sonuç -->
+  <section class="panel" id="result" hidden>
+    <div class="stage" id="stage">
+      <div class="bubble" id="bubble"></div>
+      <canvas id="fatih" width="48" height="64" aria-label="Piksel sanat Fatih Sultan Mehmet"></canvas>
+    </div>
+    <div class="panel-body">
+      <div class="score">
+        <div class="big" id="bigScore">0<small>/15</small></div>
+        <p class="verdict" id="verdict"></p>
+        <p id="verdictSub"></p>
+      </div>
+      <button class="btn ghost" id="againBtn" type="button">Yeniden Çöz</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+// ---------- Sorular (ilk seçenek doğru cevap; gösterimde karıştırılır) ----------
+const QUESTIONS = [
+  { t: "Tarihin konusu",
+    q: "Tarih biliminin konusu aşağıdakilerden hangisidir?",
+    o: ["İnsan topluluklarının geçmişteki faaliyetlerini yer ve zaman belirterek, neden-sonuç ilişkisi içinde incelemek",
+        "Doğa olaylarını deney ve gözlem yoluyla incelemek",
+        "Gelecekte yaşanacak siyasi olayları tahmin etmek",
+        "Yalnızca hükümdarların hayatlarını ve savaşları anlatmak"],
+    e: "Tarih; insan topluluklarının geçmişini yer, zaman ve neden-sonuç ilişkisiyle inceler." },
+  { t: "Tarihin yöntemi",
+    q: "Tarih biliminde deney ve gözlem yapılamamasının temel nedeni nedir?",
+    o: ["Tarihî olaylar geçmişte yaşanmıştır ve aynen tekrarlanamaz",
+        "Tarihçilerin yeterli araç gerecinin bulunmaması",
+        "Tarihin bir sosyal bilim olmaması",
+        "Tarihî kaynakların tamamının yok olmuş olması"],
+    e: "Geçmişte yaşanan bir olay laboratuvarda yeniden oluşturulamaz; tarihçi kaynaklara dayanarak çalışır." },
+  { t: "Tarihin yöntemi",
+    q: "Tarihçinin olayları kendi duygu, düşünce ve inançlarından bağımsız olarak değerlendirmesi hangi ilkeyle ilgilidir?",
+    o: ["Nesnellik (objektiflik)", "Kronoloji", "Öznellik (sübjektiflik)", "Genelleme"],
+    e: "Tarihçi tarafsız olmalı, olayları kendi yargılarına göre değil kaynakların gösterdiği şekilde aktarmalıdır." },
+  { t: "Kaynaklar",
+    q: "Aşağıdakilerden hangisi birinci el (ana) kaynaktır?",
+    o: ["Orhun Yazıtları",
+        "2015 yılında yazılmış bir Osmanlı tarihi kitabı",
+        "Bir ansiklopedideki Göktürkler maddesi",
+        "9. sınıf tarih ders kitabı"],
+    e: "Orhun Yazıtları, olayların yaşandığı Göktürk döneminde dikilmiştir; bu yüzden birinci el kaynaktır." },
+  { t: "Yardımcı bilimler",
+    q: "Eski devirlere ait madenî paraları (sikkeleri) inceleyen yardımcı bilim hangisidir?",
+    o: ["Nümizmatik", "Epigrafi", "Paleografya", "Heraldik"],
+    e: "Nümizmatik sikkeleri inceler. Epigrafi kitabeleri, paleografya eski yazıları, heraldik armaları inceler." },
+  { t: "Yardımcı bilimler",
+    q: "Ferman, berat ve antlaşma gibi resmî belgeleri inceleyerek bunların gerçek olup olmadığını araştıran bilim dalı hangisidir?",
+    o: ["Diplomatik", "Sigilografi", "Etnografya", "Filoloji"],
+    e: "Diplomatik, resmî belgelerin yapısını ve doğruluğunu inceler. Sigilografi mühürleri inceler." },
+  { t: "Yardımcı bilimler",
+    q: "Taş, kemik ve metal gibi sert maddeler üzerine yazılmış yazıtları (kitabeleri) inceleyen bilim hangisidir?",
+    o: ["Epigrafi", "Kronoloji", "Diplomatik", "Antropoloji"],
+    e: "Epigrafi kitabe bilimidir; Orhun Yazıtları gibi taş yazıtlar onun alanına girer." },
+  { t: "Tarih öncesi",
+    q: "Tarih öncesi devirleri tarih devirlerinden ayıran gelişme aşağıdakilerden hangisidir?",
+    o: ["Yazının icat edilmesi", "Ateşin bulunması", "Tekerleğin icadı", "Madenlerin işlenmesi"],
+    e: "Yazı, Sümerler tarafından MÖ 3200 civarında bulunmuştur ve tarih çağlarını başlatır." },
+  { t: "Tarih öncesi",
+    q: "İnsanların yerleşik hayata geçtiği, tarım ve hayvancılığa başladığı; Anadolu'da Çatalhöyük'ün örnek olduğu dönem hangisidir?",
+    o: ["Neolitik Dönem (Cilalı Taş)", "Paleolitik Dönem (Eski Taş)", "Tunç Çağı", "Demir Çağı"],
+    e: "Neolitik Dönem'de üretime ve yerleşik hayata geçilmiştir. Çatalhöyük bu dönemin önemli yerleşim yeridir." },
+  { t: "Çağlar",
+    q: "İlk Çağ'ı sona erdirip Orta Çağ'ı başlatan olay hangisidir?",
+    o: ["Kavimler Göçü (375)", "İstanbul'un Fethi (1453)", "Fransız İhtilali (1789)", "Yazının icadı"],
+    e: "375'teki Kavimler Göçü, İlk Çağ ile Orta Çağ arasındaki sınır kabul edilir." },
+  { t: "Çağlar",
+    q: "Fatih Sultan Mehmet'in 1453'te gerçekleştirdiği İstanbul'un Fethi hangi çağı kapatmıştır?",
+    o: ["Orta Çağ", "İlk Çağ", "Yeni Çağ", "Yakın Çağ"],
+    e: "İstanbul'un Fethi Orta Çağ'ı kapatıp Yeni Çağ'ı başlatmıştır." },
+  { t: "Çağlar",
+    q: "Yeni Çağ'ı sona erdirip Yakın Çağ'ı başlatan olay hangisidir?",
+    o: ["Fransız İhtilali (1789)", "Kavimler Göçü (375)", "Coğrafi Keşifler", "Sanayi İnkılabı"],
+    e: "1789 Fransız İhtilali; milliyetçilik, eşitlik ve özgürlük fikirlerini yayarak Yakın Çağ'ı başlatmıştır." },
+  { t: "Zaman ve yüzyıl",
+    q: "1453 yılı hangi yüzyılın hangi yarısındadır?",
+    o: ["XV. yüzyılın ikinci yarısı", "XIV. yüzyılın ikinci yarısı", "XV. yüzyılın birinci yarısı", "XIV. yüzyılın birinci yarısı"],
+    e: "1401–1500 arası XV. yüzyıldır. 1451–1500 arası bu yüzyılın ikinci yarısıdır." },
+  { t: "Takvimler",
+    q: "Hz. Muhammed'in Mekke'den Medine'ye göçünü (622) başlangıç kabul eden ve Ay yılı esaslı olan takvim hangisidir?",
+    o: ["Hicri takvim", "Celali takvim", "Rumi takvim", "Miladi takvim"],
+    e: "Hicri takvim Hz. Ömer döneminde kabul edilmiştir; bir yılı yaklaşık 354 gündür." },
+  { t: "Takvimler",
+    q: "Büyük Selçuklu Sultanı Melikşah döneminde, Ömer Hayyam'ın da bulunduğu bir heyet tarafından hazırlanan Güneş yılı esaslı takvim hangisidir?",
+    o: ["Celali takvim", "Hicri takvim", "12 Hayvanlı Türk Takvimi", "Rumi takvim"],
+    e: "Celali takvim, döneminin en hassas takvimlerinden biridir ve yılbaşı olarak Nevruz'u alır." },
+  { t: "Takvimler",
+    q: "Osmanlı Devleti'nde mali işlerde kullanılmak üzere Tanzimat Dönemi'nde kabul edilen, Güneş yılı esaslı ancak başlangıcı hicret olan takvim hangisidir?",
+    o: ["Rumi takvim", "Celali takvim", "Hicri takvim", "Miladi takvim"],
+    e: "Rumi takvim, vergi toplama gibi mali işler mevsimlere bağlı olduğu için Güneş yılına göre düzenlenmiştir." },
+  { t: "Takvimler",
+    q: "12 Hayvanlı Türk Takvimi ile ilgili aşağıdakilerden hangisi doğrudur?",
+    o: ["Yıllar 12 yıllık devreler hâlinde, her birine bir hayvan adı verilerek adlandırılır",
+        "Ay yılı esaslıdır ve hicreti başlangıç kabul eder",
+        "Osmanlı Devleti'nde mali işler için hazırlanmıştır",
+        "Hz. İsa'nın doğumunu başlangıç kabul eder"],
+    e: "Göktürk ve Uygurlar tarafından kullanılan bu takvimde yıllar sıçan, ud (öküz), pars gibi hayvan adlarıyla anılır." },
+];
+const COUNT = 15;
+const PASS_RATIO = 0.7;
+const LETTERS = ["A", "B", "C", "D"];
+
+const $ = (id) => document.getElementById(id);
+const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+let state = { phase: "start", order: [], opts: [], idx: 0, score: 0, picked: null };
+
+function newRun() {
+  const order = shuffle(QUESTIONS.map((_, i) => i)).slice(0, COUNT);
+  state = { phase: "quiz", order, opts: order.map(() => shuffle([0, 1, 2, 3])), idx: 0, score: 0, picked: null };
+}
+
+function show(phase) {
+  state.phase = phase;
+  $("start").hidden = phase !== "start";
+  $("quiz").hidden = phase !== "quiz";
+  $("result").hidden = phase !== "result";
+  if (phase !== "result") stopAnim();
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[state.order[state.idx]];
+  const perm = state.opts[state.idx];
+  $("qcount").textContent = `Soru ${state.idx + 1} / ${COUNT}`;
+  $("qtopic").textContent = q.t;
+  $("bar").style.width = `${(state.idx / COUNT) * 100}%`;
+  $("qtext").textContent = q.q;
+  const ul = $("opts");
+  ul.innerHTML = "";
+  perm.forEach((origIdx, i) => {
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "opt"; b.id = `opt-${i}`;
+    b.innerHTML = `<span class="key">${LETTERS[i]}</span><span></span>`;
+    b.lastChild.textContent = q.o[origIdx];
+    b.addEventListener("click", () => pick(i));
+    li.appendChild(b); ul.appendChild(li);
+  });
+  $("feedback").hidden = true;
+  $("nextBtn").hidden = true;
+  if (state.picked !== null) applyPick(state.picked, false);
+}
+
+function pick(i) {
+  if (state.picked !== null) return;
+  state.picked = i;
+  if (state.opts[state.idx][i] === 0) state.score++;
+  applyPick(i, true);
+}
+
+function applyPick(i, focusNext) {
+  const q = QUESTIONS[state.order[state.idx]];
+  const perm = state.opts[state.idx];
+  const correctPos = perm.indexOf(0);
+  const right = i === correctPos;
+  perm.forEach((_, k) => {
+    const b = $(`opt-${k}`);
+    b.disabled = true;
+    if (k === correctPos) b.classList.add("correct");
+    else if (k === i) b.classList.add("wrong");
+    else b.classList.add("dim");
+  });
+  const fb = $("feedback");
+  fb.className = `feedback ${right ? "ok" : "bad"}`;
+  fb.innerHTML = `<strong></strong><span></span>`;
+  fb.firstChild.textContent = right ? "Doğru!" : `Yanlış. Doğru cevap: ${LETTERS[correctPos]}`;
+  fb.lastChild.textContent = q.e;
+  fb.hidden = false;
+  const nb = $("nextBtn");
+  nb.textContent = state.idx === COUNT - 1 ? "Sonucu Gör" : "Sonraki Soru";
+  nb.hidden = false;
+  if (focusNext) nb.focus({ preventScroll: true });
+}
+
+function next() {
+  if (state.picked === null) return;
+  if (state.idx < COUNT - 1) {
+    state.idx++; state.picked = null; renderQuestion();
+    $("quiz").scrollIntoView({ behavior: "smooth", block: "start" });
+  } else {
+    $("bar").style.width = "100%";
+    renderResult();
+  }
+}
+
+// ---------- Piksel Fatih ----------
+const PAL = {
+  tur: "#f4f4f0", turS: "#c4c8d2", cap: "#c0392b", capH: "#e2604f",
+  skin: "#eab48c", skinS: "#c98d66", angrySkin: "#ec9478",
+  beard: "#4b2e1c", beardH: "#6e472b", must: "#38210f",
+  kaf: "#b8282c", kafS: "#7f1a1e", gold: "#e6b43c", sash: "#1f7a6a",
+  pants: "#3d2b4f", boot: "#e0a61e", bootS: "#9c720f",
+  eye: "#161616", white: "#ffffff", mouth: "#6e1a22", blush: "#f08a86", red: "#e0302a",
+  rose: "#e2466c", roseD: "#a8264a", leaf: "#3c8f3c",
+  dust: "#b9a07c", steam: "#e9edf3", ground: "#5f5446", groundH: "#857661", groundD: "#463d33",
+};
+const W = 48;
+function painter(ctx) {
+  let oy = 0;
+  const p = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x, y + oy, w, h); };
+  const m = (x, y, w, h, c) => p(W - x - w, y, w, h, c); // yatay ayna
+  return { p, m, setOY: (v) => { oy = v; } };
+}
+
+function drawFatih(ctx, mood, f) {
+  const { p, m, setOY } = painter(ctx);
+  ctx.clearRect(0, 0, W, 64);
+
+  // zemin (taş döşeme)
+  setOY(0);
+  for (let x = 0; x < W; x += 6) {
+    p(x, 60, 6, 1, PAL.groundH); p(x, 61, 6, 3, PAL.ground); p(x + 5, 61, 1, 3, PAL.groundD);
+  }
+
+  // bacaklar
+  const leg = (fn, kind) => {
+    if (kind === "stand") { fn(17, 52, 4, 5, PAL.pants); fn(15, 57, 6, 3, PAL.boot); fn(15, 59, 6, 1, PAL.bootS); fn(13, 58, 2, 2, PAL.boot); }
+    if (kind === "lift")  { fn(16, 52, 5, 3, PAL.pants); fn(13, 53, 5, 3, PAL.pants); fn(9, 54, 5, 3, PAL.boot); fn(7, 55, 2, 2, PAL.boot); fn(9, 56, 5, 1, PAL.bootS); }
+    if (kind === "kick")  { fn(16, 52, 4, 3, PAL.pants); fn(13, 51, 4, 3, PAL.pants); fn(8, 49, 6, 3, PAL.boot); fn(6, 48, 2, 2, PAL.boot); fn(8, 51, 6, 1, PAL.bootS); }
+    if (kind === "stomp") { fn(17, 52, 4, 6, PAL.pants); fn(15, 57, 6, 3, PAL.boot); fn(15, 59, 6, 1, PAL.bootS); fn(13, 58, 2, 2, PAL.boot); }
+  };
+  let L = "stand", R = "stand";
+  if (mood === "dance") { if (f % 2 === 0) L = "lift"; else R = "lift"; }
+  if (mood === "angry") { if (f === 1) R = "kick"; if (f === 3) L = "kick"; if (f === 2) L = "stomp"; }
+  leg(p, L); leg(m, R);
+
+  // toz bulutu (tepinme)
+  if (mood === "angry" && (f === 2 || f === 0)) {
+    const s = f === 2 ? 0 : 2;
+    p(8 - s, 57, 3, 2, PAL.dust); p(5 - s, 55, 2, 2, PAL.dust); p(11, 58, 2, 2, PAL.dust);
+    m(8 - s, 57, 3, 2, PAL.dust); m(5 - s, 55, 2, 2, PAL.dust); m(11, 58, 2, 2, PAL.dust);
+    if (f === 2) { p(2, 52, 2, 2, PAL.dust); m(2, 52, 2, 2, PAL.dust); p(20, 61, 8, 1, PAL.groundD); p(23, 62, 2, 2, PAL.groundD); }
+  }
+
+  // gövde salınımı
+  let oy = 0;
+  if (mood === "dance") oy = f % 2 ? -1 : 0;
+  if (mood === "angry") oy = f === 2 ? 1 : 0;
+  setOY(oy);
+
+  // kaftan
+  p(13, 28, 22, 1, PAL.kaf); p(12, 29, 24, 16, PAL.kaf); p(11, 45, 26, 8, PAL.kaf);
+  p(12, 29, 2, 16, PAL.kafS); p(34, 29, 2, 16, PAL.kafS); p(11, 45, 2, 8, PAL.kafS); p(35, 45, 2, 8, PAL.kafS);
+  p(23, 30, 2, 23, PAL.gold);
+  [31, 33, 35].forEach((y) => p(19, y, 10, 1, PAL.gold));
+  p(12, 38, 24, 2, PAL.sash); p(22, 38, 4, 2, PAL.gold);
+  p(15, 27, 4, 2, PAL.gold); p(29, 27, 4, 2, PAL.gold);
+  p(11, 52, 26, 1, PAL.gold);
+
+  // kollar
+  const arm = (fn, kind, shakeY) => {
+    if (kind === "side") { fn(9, 30, 3, 13, PAL.kaf); fn(9, 30, 1, 13, PAL.kafS); fn(9, 43, 3, 3, PAL.skin); }
+    if (kind === "up") {
+      fn(10, 27, 3, 4, PAL.kaf); fn(9, 22, 3, 6, PAL.kaf); fn(8, 16, 3, 7, PAL.kaf); fn(8, 16, 1, 7, PAL.kafS);
+      fn(8, 13, 3, 3, PAL.skin);
+    }
+    if (kind === "hip") { fn(9, 30, 3, 5, PAL.kaf); fn(8, 34, 3, 4, PAL.kaf); fn(8, 34, 1, 4, PAL.kafS); fn(10, 37, 3, 3, PAL.skin); }
+    if (kind === "fist") {
+      const y = shakeY;
+      fn(9, 28 + y, 3, 4, PAL.kaf); fn(7, 22 + y, 3, 7, PAL.kaf); fn(7, 22 + y, 1, 7, PAL.kafS);
+      fn(6, 18 + y, 5, 4, PAL.skin); fn(6, 18 + y, 5, 1, PAL.skinS); fn(7, 19 + y, 3, 1, PAL.skinS);
+    }
+    if (kind === "rose") { // göğüste gül tutan el
+      fn(9, 30, 3, 7, PAL.kaf); fn(9, 30, 1, 7, PAL.kafS); fn(11, 36, 4, 3, PAL.kaf); fn(14, 35, 3, 3, PAL.skin);
+      fn(15, 30, 1, 5, PAL.leaf); fn(16, 32, 1, 1, PAL.leaf); fn(14, 27, 3, 3, PAL.rose); fn(15, 26, 1, 1, PAL.rose); fn(15, 28, 1, 1, PAL.roseD);
+    }
+  };
+  const rose = (fn, x, y) => { fn(x + 1, y - 4, 1, 4, PAL.leaf); fn(x + 2, y - 3, 1, 1, PAL.leaf); fn(x, y - 7, 3, 3, PAL.rose); fn(x + 1, y - 8, 1, 1, PAL.rose); fn(x + 1, y - 6, 1, 1, PAL.roseD); };
+  if (mood === "idle") { arm(p, "side"); arm(m, "rose"); }
+  if (mood === "dance") {
+    if (f % 2 === 0) { arm(p, "up"); rose(p, 8, 13); arm(m, "hip"); }
+    else { arm(m, "up"); rose(m, 8, 13); arm(p, "hip"); }
+  }
+  if (mood === "angry") { arm(p, "fist", f % 2 ? -1 : 0); arm(m, "fist", f % 2 ? 0 : -1); }
+
+  // sarık + kırmızı külah
+  p(18, 3, 12, 1, PAL.tur); p(16, 4, 16, 1, PAL.tur); p(14, 5, 20, 8, PAL.tur); p(15, 13, 18, 1, PAL.tur); p(16, 14, 16, 1, PAL.tur);
+  p(16, 5, 5, 1, PAL.turS); p(15, 7, 8, 1, PAL.turS); p(19, 9, 10, 1, PAL.turS); p(25, 11, 8, 1, PAL.turS); p(15, 12, 18, 1, PAL.turS); p(16, 14, 16, 1, PAL.turS);
+  p(21, 0, 6, 3, PAL.cap); p(20, 3, 8, 1, PAL.cap); p(22, 0, 1, 2, PAL.capH);
+  p(23, 8, 2, 2, PAL.gold); p(23, 8, 1, 1, PAL.cap);
+
+  // yüz
+  const skin = mood === "angry" ? PAL.angrySkin : PAL.skin;
+  p(17, 15, 14, 8, skin); p(17, 15, 14, 1, PAL.skinS);
+  p(16, 17, 1, 3, PAL.skinS); p(31, 17, 1, 3, PAL.skinS);
+  p(17, 17, 1, 6, PAL.beard); p(30, 17, 1, 6, PAL.beard);
+
+  // kaşlar + gözler
+  if (mood === "angry") {
+    p(19, 16, 2, 1, PAL.beard); p(20, 17, 2, 1, PAL.beard); p(22, 18, 1, 1, PAL.beard);
+    m(19, 16, 2, 1, PAL.beard); m(20, 17, 2, 1, PAL.beard); m(22, 18, 1, 1, PAL.beard);
+    p(19, 19, 3, 2, PAL.white); p(21, 19, 1, 2, PAL.eye);
+    m(19, 19, 3, 2, PAL.white); m(21, 19, 1, 2, PAL.eye);
+    p(18, 21, 2, 1, PAL.red); m(18, 21, 2, 1, PAL.red);
+  } else if (mood === "dance") {
+    p(19, 16, 4, 1, PAL.beard); m(19, 16, 4, 1, PAL.beard);
+    p(19, 19, 1, 1, PAL.eye); p(20, 18, 2, 1, PAL.eye); p(22, 19, 1, 1, PAL.eye);
+    m(19, 19, 1, 1, PAL.eye); m(20, 18, 2, 1, PAL.eye); m(22, 19, 1, 1, PAL.eye);
+    p(18, 21, 2, 1, PAL.blush); m(18, 21, 2, 1, PAL.blush);
+  } else {
+    p(19, 17, 4, 1, PAL.beard); m(19, 17, 4, 1, PAL.beard);
+    p(19, 19, 3, 2, PAL.white); p(20, 19, 2, 2, PAL.eye);
+    m(19, 19, 3, 2, PAL.white); m(20, 19, 2, 2, PAL.eye);
+  }
+  p(24, 19, 1, 3, PAL.skinS); p(23, 21, 3, 1, PAL.skinS);
+
+  // sakal, bıyık, ağız
+  p(17, 23, 14, 4, PAL.beard); p(18, 27, 12, 1, PAL.beard); p(19, 28, 10, 1, PAL.beard);
+  p(20, 29, 8, 1, PAL.beard); p(22, 30, 4, 1, PAL.beard); p(23, 31, 2, 1, PAL.beard);
+  p(20, 27, 1, 2, PAL.beardH); p(27, 26, 1, 2, PAL.beardH); p(24, 29, 1, 2, PAL.beardH);
+  p(20, 22, 8, 1, PAL.must); p(19, 23, 2, 1, PAL.must); p(27, 23, 2, 1, PAL.must);
+  if (mood === "dance") { p(21, 24, 6, 2, PAL.mouth); p(22, 24, 4, 1, PAL.white); }
+  else if (mood === "angry") { p(21, 24, 6, 2, PAL.mouth); p(21, 24, 6, 1, PAL.white); p(23, 24, 1, 1, PAL.mouth); p(25, 24, 1, 1, PAL.mouth); }
+  else { p(22, 24, 4, 1, PAL.mouth); }
+
+  // öfke işareti + buhar
+  if (mood === "angry") {
+    p(31, 4, 1, 3, PAL.red); p(33, 4, 1, 3, PAL.red); p(30, 5, 5, 1, PAL.red);
+    const s = f % 2;
+    p(9, 8 - s * 2, 2, 2, PAL.steam); p(7, 5 - s * 2, 2, 2, PAL.steam); p(10, 2 - s, 1, 1, PAL.steam);
+    m(9, 8 - (1 - s) * 2, 2, 2, PAL.steam); m(7, 5 - (1 - s) * 2, 2, 2, PAL.steam); m(10, 2 - (1 - s), 1, 1, PAL.steam);
+  }
+}
+
+let animTimer = null, fxTimer = null;
+function stopAnim() { clearInterval(animTimer); clearInterval(fxTimer); animTimer = fxTimer = null; }
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function spawnFx(stage, mood) {
+  if (reduced) return;
+  const el = document.createElement("div");
+  el.className = "fx";
+  if (mood === "dance") {
+    if (Math.random() < 0.45) {
+      el.classList.add("note");
+      el.textContent = Math.random() < 0.5 ? "♪" : "♫";
+      el.style.left = `${10 + Math.random() * 80}%`; el.style.bottom = "40px";
+    } else {
+      el.classList.add("confetti");
+      el.style.background = ["#e6b43c", "#2fb3ad", "#e2466c", "#8aa4ff", "#ffffff"][Math.floor(Math.random() * 5)];
+      el.style.left = `${Math.random() * 100}%`; el.style.top = "0";
+    }
+  } else return;
+  stage.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function renderResult() {
+  show("result");
+  const pass = state.score >= Math.ceil(COUNT * PASS_RATIO);
+  const mood = pass ? "dance" : "angry";
+  const pct = Math.round((state.score / COUNT) * 100);
+  $("bigScore").innerHTML = `${state.score}<small>/${COUNT}</small>`;
+  const v = $("verdict");
+  v.className = `verdict ${pass ? "ok" : "bad"}`;
+  v.textContent = pass ? `%${pct} başarı. Sınavı fethettin!` : `%${pct} başarı. Geçme sınırı %70.`;
+  $("verdictSub").textContent = pass
+    ? "Padişah keyiflendi, dans ediyor."
+    : `Geçmek için en az ${Math.ceil(COUNT * PASS_RATIO)} doğru gerekiyordu. Konuları tekrar edip yeniden dene.`;
+  $("bubble").textContent = pass ? "Maşallah! Bu sınavı fethettin!" : "Bu ne hâl?! Kitabı aç, tekrar çalış!";
+
+  const stage = $("stage");
+  stage.className = `stage ${mood}`;
+  stage.querySelectorAll(".fx").forEach((n) => n.remove());
+  const ctx = $("fatih").getContext("2d");
+  let f = 0;
+  stopAnim();
+  drawFatih(ctx, mood, 0);
+  animTimer = setInterval(() => {
+    f = (f + 1) % 4;
+    drawFatih(ctx, mood, f);
+    if (mood === "angry" && f === 2 && !reduced) {
+      stage.classList.remove("shake"); void stage.offsetWidth; stage.classList.add("shake");
+    }
+  }, mood === "dance" ? 260 : 190);
+  fxTimer = setInterval(() => spawnFx(stage, mood), 180);
+  $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// ---------- Olaylar ----------
+$("startBtn").addEventListener("click", () => { newRun(); show("quiz"); renderQuestion(); });
+$("nextBtn").addEventListener("click", next);
+$("againBtn").addEventListener("click", () => { newRun(); show("quiz"); renderQuestion(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+document.addEventListener("keydown", (e) => {
+  if (state.phase !== "quiz" || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  const map = { a: 0, b: 1, c: 2, d: 3, "1": 0, "2": 1, "3": 2, "4": 3 };
+  if (k in map && state.picked === null) { e.preventDefault(); pick(map[k]); }
+  else if (k === "enter" && state.picked !== null && document.activeElement !== $("nextBtn")) { e.preventDefault(); next(); }
+});
+
+drawFatih($("miniCanvas").getContext("2d"), "idle", 0);
+
+// Sayfa güncellenirse kaldığı yerden devam
+function start(data) {
+  if (data && data.state && data.state.phase && data.state.phase !== "start") {
+    state = data.state;
+    if (state.phase === "quiz") { show("quiz"); renderQuestion(); }
+    else renderResult();
+  }
+}
+window.claude?.hot?.snapshot?.(() => ({ state }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
