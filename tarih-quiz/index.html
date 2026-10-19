@@ -71,6 +71,18 @@ h1 {
 }
 h1 em { font-style: italic; font-weight: 500; color: var(--cobalt); }
 .sub { margin: 0; color: var(--muted); max-width: 60ch; }
+.topline { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.sound {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  font: 600 13px/1 var(--font-body); color: var(--muted);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px;
+}
+.sound:hover { color: var(--ink); border-color: var(--cobalt); }
+.sound:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.sound svg { width: 16px; height: 16px; flex: none; }
+.sound .wave, .sound .mute-x { transition: opacity .15s; }
+.sound[aria-pressed="false"] .wave { opacity: 0; }
+.sound[aria-pressed="true"] .mute-x { opacity: 0; }
 
 /* Kart */
 .panel {
@@ -100,11 +112,18 @@ h1 em { font-style: italic; font-weight: 500; color: var(--cobalt); }
 .facts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; color: var(--muted); font-size: 15px; }
 .facts b { color: var(--ink); font-variant-numeric: tabular-nums; }
 .mini-stage {
+  position: relative;
   width: 150px; border-radius: 10px; overflow: hidden;
   background: linear-gradient(var(--stage-top), var(--stage-bot));
   display: grid; place-items: end center; padding-top: 6px;
 }
 .mini-stage canvas { width: 120px; height: 160px; }
+.mystery {
+  position: absolute; left: 0; right: 0; top: 38%; text-align: center;
+  font: 700 46px/1 var(--font-pixel); color: #ffd76a; text-shadow: 3px 3px 0 #0a0f1f;
+  animation: bob 1.6s ease-in-out infinite;
+}
+@keyframes bob { 50% { transform: translateY(-6px); } }
 @media (max-width: 520px) {
   .intro { grid-template-columns: 1fr; }
   .mini-stage { justify-self: center; }
@@ -187,6 +206,9 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
 }
 .stage.dance { background: radial-gradient(circle at 50% 110%, #3d5fbf 0, transparent 60%), linear-gradient(var(--stage-top), var(--stage-bot)); }
 .stage.angry { background: radial-gradient(circle at 50% 100%, #7a1d1d 0, transparent 65%), linear-gradient(#1c1010, #3a1414); }
+.stage.suspense { background: radial-gradient(circle at 50% 100%, #2a2f45 0, transparent 60%), linear-gradient(#070a14, #121829); }
+.stage.suspense canvas { animation: tremble .12s linear infinite; }
+@keyframes tremble { 50% { transform: translateX(1px); } }
 .stage.shake { animation: shake .16s linear; }
 @keyframes shake {
   0%, 100% { transform: translate(0, 0); }
@@ -212,7 +234,7 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
 .score p { margin: 0; color: var(--muted); }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage.shake, .note, .confetti { animation: none; }
+  .stage.shake, .note, .confetti, .mystery, .stage.suspense canvas { animation: none; }
   .fx { display: none; }
   .bar span { transition: none; }
 }
@@ -220,7 +242,17 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
 
 <main class="wrap">
   <header class="masthead">
-    <span class="eyebrow">9. Sınıf Tarih · 1. Ünite</span>
+    <div class="topline">
+      <span class="eyebrow">9. Sınıf Tarih · 1. Ünite</span>
+      <button class="sound" id="soundBtn" type="button" aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" stroke="none"></path>
+          <path class="wave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"></path>
+          <path class="mute-x" d="M16 9l5 6M21 9l-5 6"></path>
+        </svg>
+        <span class="label">Ses açık</span>
+      </button>
+    </div>
     <h1>Tarih Bilimi <em>ve</em> Zaman</h1>
     <p class="sub">Tarihin konusu ve yöntemi, kaynaklar, yardımcı bilimler, çağlar ve takvimler üzerine 15 soruluk değerlendirme.</p>
   </header>
@@ -237,10 +269,10 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: bloc
             <li>Tarih öncesi</li><li>Çağlar</li><li>Takvimler</li>
           </ul>
           <p class="facts"><span><b>15</b> soru</span><span><b>4</b> seçenek</span><span>Geçme: <b>%70</b></span></p>
-          <p class="sub">Sonunda Fatih Sultan Mehmet seni bekliyor. İyi yaparsan dans eder, kötü yaparsan yerleri tekmeler.</p>
+          <p class="sub">Sınavın sonunda biri sonucunu bekliyor. Onu nasıl karşılayacağın tamamen sana bağlı. Sesini açmayı unutma.</p>
           <button class="btn" id="startBtn" type="button">Sınava Başla</button>
         </div>
-        <div class="mini-stage" aria-hidden="true"><canvas id="miniCanvas" width="48" height="64"></canvas></div>
+        <div class="mini-stage" aria-hidden="true"><canvas id="miniCanvas" width="48" height="64"></canvas><span class="mystery">?</span></div>
       </div>
     </div>
   </section>
@@ -370,6 +402,156 @@ const COUNT = 15;
 const PASS_RATIO = 0.7;
 const LETTERS = ["A", "B", "C", "D"];
 
+// ---------- Ses (Web Audio ile sentezlenir, dosya yok) ----------
+const Sound = (() => {
+  const VOL = 0.55;
+  let ac = null, master = null, noiseBuf = null, music = null, muted = false;
+  try { muted = localStorage.getItem("tq-muted") === "1"; } catch (e) {}
+
+  function init() {
+    if (!ac) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ac = new AC();
+      master = ac.createGain(); master.gain.value = muted ? 0 : VOL; master.connect(ac.destination);
+      noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ac.state === "suspended") ac.resume().catch(() => {});
+    return ac;
+  }
+  const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
+  function env(g, t, vol, a, dur, r) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + a);
+    g.gain.setValueAtTime(vol, t + Math.max(a, dur - r));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  }
+  function tone(freq, t, dur, o = {}) {
+    const { type = "square", vol = 0.15, a = 0.005, r = 0.05, slide = null, out = master } = o;
+    const osc = ac.createOscillator(), g = ac.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(freq, t);
+    if (slide) osc.frequency.exponentialRampToValueAtTime(slide, t + dur);
+    env(g, t, vol, a, dur, r);
+    osc.connect(g).connect(out); osc.start(t); osc.stop(t + dur + 0.02);
+  }
+  function noise(t, dur, o = {}) {
+    const { vol = 0.2, type = "highpass", freq = 1000, q = 0.7, sweep = null, a = 0.002, out = master } = o;
+    const src = ac.createBufferSource(); src.buffer = noiseBuf;
+    const f = ac.createBiquadFilter(); f.type = type; f.Q.value = q; f.frequency.setValueAtTime(freq, t);
+    if (sweep) f.frequency.exponentialRampToValueAtTime(sweep, t + dur);
+    const g = ac.createGain(); env(g, t, vol, a, dur, dur * 0.8);
+    src.connect(f).connect(g).connect(out); src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.02);
+  }
+  const thump = (t, vol, from, to, dur, out = master) => tone(from, t, dur, { type: "sine", vol, a: 0.002, r: dur * 0.9, slide: to, out });
+
+  // zurna: testere + kare dalga, vibrato ve genizden gelen bant geçiren filtre
+  function zurna(freq, t, dur, vol, out = master) {
+    const o1 = ac.createOscillator(), o2 = ac.createOscillator(), lfo = ac.createOscillator(), lg = ac.createGain();
+    o1.type = "sawtooth"; o2.type = "square";
+    o1.frequency.value = freq; o2.frequency.value = freq * 1.003;
+    lfo.frequency.value = 6; lg.gain.value = freq * 0.008;
+    lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency);
+    const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1400; bp.Q.value = 0.9;
+    const g = ac.createGain(); env(g, t, vol, 0.02, dur, Math.min(0.06, dur * 0.3));
+    o1.connect(bp); o2.connect(bp); bp.connect(g).connect(out);
+    [o1, o2, lfo].forEach((o) => { o.start(t); o.stop(t + dur + 0.05); });
+  }
+  const davul = (t, v, out = master) => { thump(t, v, 110, 42, 0.22, out); noise(t, 0.08, { type: "lowpass", freq: 600, vol: v * 0.35, out }); };
+  const tek = (t, out = master) => { noise(t, 0.05, { type: "bandpass", freq: 2600, q: 1.2, vol: 0.28, out }); tone(380, t, 0.04, { type: "triangle", vol: 0.12, out }); };
+  const nakkare = (t, out = master) => tone(260, t, 0.07, { type: "triangle", vol: 0.12, slide: 200, out });
+  const zil = (t, out = master) => noise(t, 0.5, { type: "highpass", freq: 6000, vol: 0.09, out });
+
+  // Mehter tarzı marş: Re hicaz dizisinde 8 ölçülük döngü (süreler sekizlik)
+  const BPM = 108, E = 60 / BPM / 2;
+  const D4 = 62, Eb4 = 63, Fs4 = 66, G4 = 67, A4 = 69, Bb4 = 70, C5 = 72, D5 = 74;
+  const MELODY = [
+    [A4, 2], [A4, 1], [Bb4, 1], [A4, 2], [G4, 2],
+    [Fs4, 1], [G4, 1], [A4, 2], [A4, 4],
+    [Bb4, 1], [C5, 1], [Bb4, 1], [A4, 1], [G4, 2], [Fs4, 2],
+    [G4, 2], [Fs4, 1], [Eb4, 1], [D4, 4],
+    [D4, 1], [Fs4, 1], [A4, 2], [D5, 2], [C5, 1], [Bb4, 1],
+    [A4, 2], [Bb4, 1], [A4, 1], [G4, 4],
+    [G4, 1], [A4, 1], [Bb4, 1], [A4, 1], [G4, 1], [Fs4, 1], [Eb4, 1], [Fs4, 1],
+    [D4, 4], [D4, 2], [0, 2],
+  ];
+  const LOOP = 64, notesAt = {};
+  MELODY.reduce((pos, [n, d]) => { if (n) notesAt[pos] = [n, d]; return pos + d; }, 0);
+
+  function startMusic() {
+    if (!init()) return;
+    stopMusic();
+    const out = ac.createGain(); out.gain.value = 0.9; out.connect(master);
+    let step = 0, next = ac.currentTime + 0.05;
+    const timer = setInterval(() => {
+      if (next < ac.currentTime - 0.05) next = ac.currentTime + 0.05; // sekme arka plandaysa birikmeyi atla
+      while (next < ac.currentTime + 0.15) {
+        const i = step % LOOP, b = i % 8, n = notesAt[i];
+        if (n) { const f = midi(n[0]), d = n[1] * E * 0.95; zurna(f, next, d, 0.32, out); zurna(f / 2, next, d, 0.14, out); }
+        if (b === 0) { davul(next, 0.9, out); if (i % 16 === 0) zil(next, out); }
+        else if (b === 4) davul(next, 0.85, out);
+        else if (b === 5) davul(next, 0.5, out);
+        else if (b === 2 || b === 6) tek(next, out);
+        else nakkare(next, out);
+        step++; next += E;
+      }
+    }, 25);
+    music = { out, timer };
+  }
+  function stopMusic() {
+    if (!music) return;
+    clearInterval(music.timer);
+    const out = music.out;
+    out.gain.setTargetAtTime(0, ac.currentTime, 0.08);
+    setTimeout(() => out.disconnect(), 600);
+    music = null;
+  }
+
+  const play = (fn) => { if (!init() || muted) return; fn(ac.currentTime + 0.01); };
+  return {
+    init, startMusic, stopMusic, beatMs: E * 1000,
+    isMuted: () => muted,
+    setMuted(v) {
+      muted = v;
+      try { localStorage.setItem("tq-muted", v ? "1" : "0"); } catch (e) {}
+      if (master) master.gain.setTargetAtTime(v ? 0 : VOL, ac.currentTime, 0.02);
+    },
+    click: () => play((t) => tone(700, t, 0.035, { vol: 0.06 })),
+    correct: () => play((t) => {
+      tone(midi(76), t, 0.09, { vol: 0.12 });
+      tone(midi(83), t + 0.09, 0.2, { vol: 0.12 });
+      tone(midi(88), t + 0.09, 0.2, { vol: 0.06, type: "triangle" });
+    }),
+    wrong: () => play((t) => {
+      tone(196, t, 0.32, { type: "sawtooth", vol: 0.12, slide: 98 });
+      tone(207, t, 0.32, { type: "sawtooth", vol: 0.1, slide: 104 });
+    }),
+    fanfare: () => play((t) => {
+      [D4, Fs4, A4].forEach((n, k) => zurna(midi(n), t + k * 0.12, 0.11, 0.3));
+      zurna(midi(D5), t + 0.36, 0.45, 0.3);
+      davul(t, 0.7); davul(t + 0.36, 0.9); zil(t + 0.36);
+    }),
+    drumroll: (dur) => play((t) => {
+      const n = Math.floor(dur / 0.045);
+      for (let k = 0; k < n; k++) noise(t + k * 0.045, 0.04, { type: "bandpass", freq: 1800, q: 0.8, vol: 0.05 + 0.25 * (k / n) });
+      davul(t + dur, 1); zil(t + dur);
+      noise(t + dur, 0.9, { type: "highpass", freq: 4000, vol: 0.16 });
+    }),
+    womp: () => play((t) => {
+      const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 900; lp.connect(master);
+      [[196, 0], [185, 0.32], [175, 0.64]].forEach(([f, d]) => tone(f, t + d, 0.28, { type: "sawtooth", vol: 0.16, out: lp }));
+      tone(147, t + 0.96, 0.9, { type: "sawtooth", vol: 0.18, slide: 128, r: 0.3, out: lp });
+    }),
+    kick: () => play((t) => {
+      noise(t, 0.09, { type: "bandpass", freq: 700, sweep: 2600, q: 1, vol: 0.12 });
+      thump(t + 0.05, 0.6, 150, 50, 0.14);
+    }),
+    stomp: () => play((t) => { thump(t, 1, 95, 30, 0.3); noise(t, 0.3, { type: "lowpass", freq: 250, vol: 0.45 }); }),
+    steam: () => play((t) => noise(t, 0.6, { type: "highpass", freq: 3500, vol: 0.06, a: 0.08 })),
+  };
+})();
+
 const $ = (id) => document.getElementById(id);
 const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
@@ -414,7 +596,9 @@ function renderQuestion() {
 function pick(i) {
   if (state.picked !== null) return;
   state.picked = i;
-  if (state.opts[state.idx][i] === 0) state.score++;
+  const right = state.opts[state.idx][i] === 0;
+  if (right) state.score++;
+  right ? Sound.correct() : Sound.wrong();
   applyPick(i, true);
 }
 
@@ -444,6 +628,7 @@ function applyPick(i, focusNext) {
 
 function next() {
   if (state.picked === null) return;
+  Sound.click();
   if (state.idx < COUNT - 1) {
     state.idx++; state.picked = null; renderQuestion();
     $("quiz").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -592,8 +777,20 @@ function drawFatih(ctx, mood, f) {
   }
 }
 
-let animTimer = null, fxTimer = null;
-function stopAnim() { clearInterval(animTimer); clearInterval(fxTimer); animTimer = fxTimer = null; }
+function drawSilhouette(ctx) {
+  drawFatih(ctx, "idle", 0);
+  ctx.globalCompositeOperation = "source-atop";
+  ctx.fillStyle = "#0a0f1f";
+  ctx.fillRect(0, 0, W, 64);
+  ctx.globalCompositeOperation = "source-over";
+}
+
+let animTimer = null, fxTimer = null, revealTimer = null;
+function stopAnim() {
+  clearInterval(animTimer); clearInterval(fxTimer); clearTimeout(revealTimer);
+  animTimer = fxTimer = revealTimer = null;
+  Sound.stopMusic();
+}
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function spawnFx(stage, mood) {
@@ -615,8 +812,25 @@ function spawnFx(stage, mood) {
   setTimeout(() => el.remove(), 3000);
 }
 
+const SUSPENSE_MS = 1800;
 function renderResult() {
   show("result");
+  stopAnim();
+  const stage = $("stage");
+  stage.className = "stage suspense";
+  stage.querySelectorAll(".fx").forEach((n) => n.remove());
+  drawSilhouette($("fatih").getContext("2d"));
+  $("bubble").textContent = "...";
+  $("bigScore").innerHTML = `?<small>/${COUNT}</small>`;
+  $("verdict").className = "verdict";
+  $("verdict").textContent = "Sonucun inceleniyor...";
+  $("verdictSub").textContent = "";
+  $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+  Sound.drumroll(SUSPENSE_MS / 1000 - 0.05);
+  revealTimer = setTimeout(reveal, SUSPENSE_MS);
+}
+
+function reveal() {
   const pass = state.score >= Math.ceil(COUNT * PASS_RATIO);
   const mood = pass ? "dance" : "angry";
   const pct = Math.round((state.score / COUNT) * 100);
@@ -631,26 +845,38 @@ function renderResult() {
 
   const stage = $("stage");
   stage.className = `stage ${mood}`;
-  stage.querySelectorAll(".fx").forEach((n) => n.remove());
   const ctx = $("fatih").getContext("2d");
-  let f = 0;
-  stopAnim();
+  let f = 0, tick = 0;
   drawFatih(ctx, mood, 0);
+  if (pass) Sound.startMusic(); else Sound.womp();
   animTimer = setInterval(() => {
-    f = (f + 1) % 4;
+    f = (f + 1) % 4; tick++;
     drawFatih(ctx, mood, f);
-    if (mood === "angry" && f === 2 && !reduced) {
-      stage.classList.remove("shake"); void stage.offsetWidth; stage.classList.add("shake");
+    if (mood === "angry") {
+      if (f === 1 || f === 3) Sound.kick();
+      if (f === 2) {
+        Sound.stomp();
+        if (!reduced) { stage.classList.remove("shake"); void stage.offsetWidth; stage.classList.add("shake"); }
+      }
+      if (tick % 8 === 0) Sound.steam();
     }
-  }, mood === "dance" ? 260 : 190);
+  }, mood === "dance" ? Sound.beatMs : 220);
   fxTimer = setInterval(() => spawnFx(stage, mood), 180);
-  $("result").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // ---------- Olaylar ----------
-$("startBtn").addEventListener("click", () => { newRun(); show("quiz"); renderQuestion(); });
+$("startBtn").addEventListener("click", () => { Sound.fanfare(); newRun(); show("quiz"); renderQuestion(); });
 $("nextBtn").addEventListener("click", next);
-$("againBtn").addEventListener("click", () => { newRun(); show("quiz"); renderQuestion(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+$("againBtn").addEventListener("click", () => { Sound.fanfare(); newRun(); show("quiz"); renderQuestion(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+
+const soundBtn = $("soundBtn");
+function syncSoundBtn() {
+  const on = !Sound.isMuted();
+  soundBtn.setAttribute("aria-pressed", String(on));
+  soundBtn.querySelector(".label").textContent = on ? "Ses açık" : "Ses kapalı";
+}
+soundBtn.addEventListener("click", () => { Sound.init(); Sound.setMuted(!Sound.isMuted()); syncSoundBtn(); });
+syncSoundBtn();
 document.addEventListener("keydown", (e) => {
   if (state.phase !== "quiz" || e.metaKey || e.ctrlKey || e.altKey) return;
   const k = e.key.toLowerCase();
@@ -659,7 +885,7 @@ document.addEventListener("keydown", (e) => {
   else if (k === "enter" && state.picked !== null && document.activeElement !== $("nextBtn")) { e.preventDefault(); next(); }
 });
 
-drawFatih($("miniCanvas").getContext("2d"), "idle", 0);
+drawSilhouette($("miniCanvas").getContext("2d"));
 
 // Sayfa güncellenirse kaldığı yerden devam
 function start(data) {
